@@ -20,13 +20,13 @@ jobs:
         password: ${{ secrets.ACR_PASSWORD }}
 
     - name: Build and Push
-    run: |
-      IMAGE_NAME=aztestwestus3backendacr.azurecr.io/sample-app-aoai-chatgpt
+      run: |
+        IMAGE_NAME=aztestwestus3backendacr.azurecr.io/sample-app-aoai-chatgpt
 
-      TAG=patch1-${{ github.sha }}
+        TAG=patch1-${{ github.sha }}
 
-      docker build . --no-cache --file WebApp.Dockerfile --tag $IMAGE_NAME:$TAG
-      docker tag $IMAGE_NAME:$TAG $IMAGE_NAME:latest
+        docker build . --no-cache --file WebApp.Dockerfile --tag $IMAGE_NAME:$TAG
+        docker tag $IMAGE_NAME:$TAG $IMAGE_NAME:latest
 
-      docker push $IMAGE_NAME:$TAG
-      docker push $IMAGE_NAME:latest
+        docker push $IMAGE_NAME:$TAG
+        docker push $IMAGE_NAME:latest
