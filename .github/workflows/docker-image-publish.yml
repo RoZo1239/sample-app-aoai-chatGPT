@@ -7,27 +7,21 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-
     - uses: actions/checkout@v3
 
-    - name: Login to Azure Container Registry
+    - name: Login to ACR
       uses: azure/docker-login@v2
       with:
         login-server: aztestwestus3backendacr.azurecr.io
         username: ${{ secrets.ACR_USERNAME }}
         password: ${{ secrets.ACR_PASSWORD }}
 
-    - name: Build and Push Docker image
+    - name: Build and Push
       run: |
         IMAGE_NAME=aztestwestus3backendacr.azurecr.io/sample-app-aoai-chatgpt
-        TAG=$(date +'%Y-%m-%d')_${GITHUB_RUN_NUMBER}
 
-        docker build . --file WebApp.Dockerfile --tag $IMAGE_NAME:$TAG
-        docker tag $IMAGE_NAME:$TAG $IMAGE_NAME:latest
-
-        docker push $IMAGE_NAME:$TAG
-        docker push $IMAGE_NAME:latest
+        docker build . --file WebApp.Dockerfile --tag $IMAGE_NAME:patch1
+        docker push $IMAGE_NAME:patch1
