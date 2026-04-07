@@ -67,5 +67,17 @@ def test_dotenv_with_elasticsearch_success(app_settings):
     assert payload["parameters"]["endpoint"] == "dummy"
     print(payload)
 
-    
+def test_datasource_type_azure_ai_search_alias_from_env():
+    os.environ["DATASOURCE_TYPE"] = "Azure AI Search"
+    os.environ["DOTENV_PATH"] = os.path.join(
+        os.path.dirname(__file__),
+        "dotenv_data",
+        "dotenv_with_azure_search_success"
+    )
+    settings_module = import_module("backend.settings")
+    settings_module = reload(settings_module)
+    app_settings = getattr(settings_module, "app_settings")
+    assert app_settings.datasource is not None
+    payload = app_settings.datasource.construct_payload_configuration()
+    assert payload["type"] == "azure_search"
     
