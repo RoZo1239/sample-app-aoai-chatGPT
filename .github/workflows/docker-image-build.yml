@@ -3,7 +3,7 @@ name: Docker Image Build
 on:
   pull_request:
     branches:
-    - main
+    - patch-1
 
 jobs:
 
