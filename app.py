@@ -41,6 +41,10 @@ bp = Blueprint("routes", __name__, static_folder="static", template_folder="stat
 cosmos_db_ready = asyncio.Event()
 import os
 
+def debug_print_app_settings():
+    if os.getenv("PRINT_APP_SETTINGS", "false").lower() == "true":
+        print("app_settings =", app_settings.__dict__)
+        
 SYSTEM_PROMPT = os.environ.get(
     "SYSTEM_PROMPT", 
     """You are a Marketing and sales Assistant AI.
@@ -73,6 +77,7 @@ def create_app():
     app = Quart(__name__)
     app.register_blueprint(bp)
     app.config["TEMPLATES_AUTO_RELOAD"] = True
+    debug_print_app_settings()
     
     @app.before_serving
     async def init():
