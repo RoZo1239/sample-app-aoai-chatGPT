@@ -797,31 +797,48 @@ class _AppSettings(BaseModel):
     @model_validator(mode="after")
     def set_datasource_settings(self) -> Self:
         try:
-            if self.base_settings.datasource_type == "AzureCognitiveSearch":
+            datasource_type = self.base_settings.datasource_type
+            if datasource_type:
+                datasource_type = datasource_type.strip().strip("\"'").lower()
+
+            datasource_type_aliases = {
+                "azurecognitivesearch": "azurecognitivesearch",
+                "azure_search": "azurecognitivesearch",
+                "azuresearch": "azurecognitivesearch",
+                "azurecosmosdb": "azurecosmosdb",
+                "elasticsearch": "elasticsearch",
+                "pinecone": "pinecone",
+                "azuremlindex": "azuremlindex",
+                "azuresqlserver": "azuresqlserver",
+                "mongodb": "mongodb",
+            }
+            normalized_datasource_type = datasource_type_aliases.get(datasource_type, datasource_type)
+
+            if normalized_datasource_type == "azurecognitivesearch":
                 self.datasource = _AzureSearchSettings(settings=self, _env_file=DOTENV_PATH)
                 logging.debug("Using Azure Cognitive Search")
             
-            elif self.base_settings.datasource_type == "AzureCosmosDB":
+            elif normalized_datasource_type == "azurecosmosdb":
                 self.datasource = _AzureCosmosDbMongoVcoreSettings(settings=self, _env_file=DOTENV_PATH)
                 logging.debug("Using Azure CosmosDB Mongo vcore")
             
-            elif self.base_settings.datasource_type == "Elasticsearch":
+            elif normalized_datasource_type == "elasticsearch":
                 self.datasource = _ElasticsearchSettings(settings=self, _env_file=DOTENV_PATH)
                 logging.debug("Using Elasticsearch")
             
-            elif self.base_settings.datasource_type == "Pinecone":
+            elif normalized_datasource_type == "pinecone":
                 self.datasource = _PineconeSettings(settings=self, _env_file=DOTENV_PATH)
                 logging.debug("Using Pinecone")
             
-            elif self.base_settings.datasource_type == "AzureMLIndex":
+            elif normalized_datasource_type == "azuremlindex":
                 self.datasource = _AzureMLIndexSettings(settings=self, _env_file=DOTENV_PATH)
                 logging.debug("Using Azure ML Index")
             
-            elif self.base_settings.datasource_type == "AzureSqlServer":
+            elif normalized_datasource_type == "azuresqlserver":
                 self.datasource = _AzureSqlServerSettings(settings=self, _env_file=DOTENV_PATH)
                 logging.debug("Using SQL Server")
             
-            elif self.base_settings.datasource_type == "MongoDB":
+            elif normalized_datasource_type == "mongodb":
                 self.datasource = _MongoDbSettings(settings=self, _env_file=DOTENV_PATH)
                 logging.debug("Using Mongo DB")
                 
