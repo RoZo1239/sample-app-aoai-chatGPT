@@ -43,7 +43,12 @@ import os
 
 def debug_print_app_settings():
     if os.getenv("PRINT_APP_SETTINGS", "false").lower() == "true":
-        print("app_settings =", app_settings.__dict__)
+        print("==== DEBUG START ====")
+        print("AZURE_SEARCH_ENDPOINT:", os.getenv("AZURE_SEARCH_ENDPOINT"))
+        print("AZURE_SEARCH_INDEX:", os.getenv("AZURE_SEARCH_INDEX"))
+        print("AZURE_SEARCH_KEY:", "SET" if os.getenv("AZURE_SEARCH_KEY") else "MISSING")
+        print("DATASOURCE OBJECT:", app_settings.datasource)
+        print("==== DEBUG END ====")
         
 SYSTEM_PROMPT = os.environ.get(
     "SYSTEM_PROMPT", 
