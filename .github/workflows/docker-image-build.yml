@@ -3,11 +3,10 @@ name: Docker Image Build
 on:
   push:
     branches:
-      - patch-1   # your working branch
+      - patch-1
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -18,10 +17,12 @@ jobs:
           echo "${{ secrets.ACR_PASSWORD }}" | docker login aztestwestus3backendacr.azurecr.io \
           --username ${{ secrets.ACR_USERNAME }} --password-stdin
 
-      - name: Build and Push Docker image
+      - name: Build Docker image
         run: |
           docker build . \
             --file WebApp.Dockerfile \
             --tag aztestwestus3backendacr.azurecr.io/sample-app-aoai-chatgpt:patch1
 
+      - name: Push Docker image
+        run: |
           docker push aztestwestus3backendacr.azurecr.io/sample-app-aoai-chatgpt:patch1
