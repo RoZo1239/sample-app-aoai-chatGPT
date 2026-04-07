@@ -1,0 +1,63 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy container app to Azure Web App - marketing-bot
+
+on:
+  push:
+    branches:
+      - patch-1
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read #This is required for actions/checkout
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to container registry
+        uses: docker/login-action@v2
+        with:
+          registry: aztestwestus3backendacr.azurecr.io/
+          username: ${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_93E754E88F0F48A69BE98D67ED5C0A73 }}
+          password: ${{ secrets.AZUREAPPSERVICE_CONTAINERPASSWORD_152CEBB4196940238A94AA4E184032FF }}
+
+      - name: Build and push container image to registry
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: aztestwestus3backendacr.azurecr.io/${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_93E754E88F0F48A69BE98D67ED5C0A73 }}/sample-app-aoai-chatgpt:patch1:${{ github.sha }}
+          file: ./Dockerfile
+
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
+
+    needs: build
+    
+    steps:
+      
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A6150FAF77A748EB93AAAFCB27C5D069 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_81F86C9AAF9A4EA8B943038634228A7D }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C614B602592E4813B53EDA9A73AAE007 }}
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'marketing-bot'
+          slot-name: 'Production'
+          images: 'aztestwestus3backendacr.azurecr.io/${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_93E754E88F0F48A69BE98D67ED5C0A73 }}/sample-app-aoai-chatgpt:patch1:${{ github.sha }}'
+          
