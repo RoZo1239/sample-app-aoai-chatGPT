@@ -800,11 +800,12 @@ class _AppSettings(BaseModel):
             datasource_type = self.base_settings.datasource_type
             if datasource_type:
                 datasource_type = datasource_type.strip().strip("\"'").lower()
+                datasource_type = datasource_type.replace(" ", "").replace("-", "").replace("_", "")
 
             datasource_type_aliases = {
                 "azurecognitivesearch": "azurecognitivesearch",
                 "azure_search": "azurecognitivesearch",
-                "azuresearch": "azurecognitivesearch",
+                "azureaisearch": "azurecognitivesearch",
                 "azurecosmosdb": "azurecosmosdb",
                 "elasticsearch": "elasticsearch",
                 "pinecone": "pinecone",
