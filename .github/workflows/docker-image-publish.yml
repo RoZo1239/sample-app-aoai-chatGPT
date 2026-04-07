@@ -1,4 +1,4 @@
-name: Docker Image Publish
+name: Docker Image Publish 
 
 on:
   push:
@@ -23,7 +23,9 @@ jobs:
       run: |
         IMAGE_NAME=aztestwestus3backendacr.azurecr.io/sample-app-aoai-chatgpt
 
-        TAG=patch1-${{ github.sha }}
+        TAG=patch1-${{ github.run_number }}
+
+        echo "Using tag: $TAG"
 
         docker build . --no-cache --file WebApp.Dockerfile --tag $IMAGE_NAME:$TAG
         docker tag $IMAGE_NAME:$TAG $IMAGE_NAME:latest
