@@ -39,7 +39,7 @@ def test_dotenv_no_datasource_2(app_settings):
 def test_dotenv_with_azure_search_success(app_settings):
     # Validate model object
     assert app_settings.search is not None
-    assert app_settings.base_settings.datasource_type == "AzureCognitiveSearch"
+    assert app_settings.base_settings.datasource_type == "azure_search"
     assert app_settings.datasource is not None
     assert app_settings.datasource.service == "search_service"
     assert app_settings.azure_openai is not None
@@ -69,4 +69,3 @@ def test_dotenv_with_elasticsearch_success(app_settings):
 
     
     
-
