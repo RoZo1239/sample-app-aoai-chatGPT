@@ -23,5 +23,9 @@ jobs:
       run: |
         IMAGE_NAME=aztestwestus3backendacr.azurecr.io/sample-app-aoai-chatgpt
 
-        docker build . --file WebApp.Dockerfile --tag $IMAGE_NAME:patch1
+        docker build . --no-cache --file WebApp.Dockerfile --tag $IMAGE_NAME:patch1
+
+        docker tag $IMAGE_NAME:patch1 $IMAGE_NAME:latest
+
         docker push $IMAGE_NAME:patch1
+        docker push $IMAGE_NAME:latest
