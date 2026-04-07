@@ -1,19 +1,27 @@
 name: Docker Image Build
 
 on:
-  pull_request:
+  push:
     branches:
-    - patch-1
+      - patch-1   # your working branch
 
 jobs:
-
   build:
 
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run:         
-        docker build . --file WebApp.Dockerfile --tag sampleappaoaichatgpt.azurecr.io/sample-app-aoai-chatgpt:$(date +'%Y-%m-%d')_$GITHUB_RUN_NUMBER
-      
+      - uses: actions/checkout@v3
+
+      - name: Login to Azure Container Registry
+        run: |
+          echo "${{ secrets.ACR_PASSWORD }}" | docker login aztestwestus3backendacr.azurecr.io \
+          --username ${{ secrets.ACR_USERNAME }} --password-stdin
+
+      - name: Build and Push Docker image
+        run: |
+          docker build . \
+            --file WebApp.Dockerfile \
+            --tag aztestwestus3backendacr.azurecr.io/sample-app-aoai-chatgpt:patch1
+
+          docker push aztestwestus3backendacr.azurecr.io/sample-app-aoai-chatgpt:patch1
