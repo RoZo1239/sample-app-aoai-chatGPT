@@ -262,15 +262,13 @@ async def init_cosmosdb_client():
         logging.debug("CosmosDB not configured")
 
     return cosmos_conversation_client
-
+SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT", "")
 
 def prepare_model_args(request_body, request_headers):
     request_messages = request_body.get("messages", [])
     messages = [
-    {
-        "role": "system",
-        "content": SYSTEM_PROMPT
-    }
+    {"role": "system", "content": SYSTEM_PROMPT},
+    {"role": "user", "content": query}
 ]
 
     for message in request_messages:
@@ -448,7 +446,10 @@ async def send_chat_request(request_body, request_headers):
     for message in messages:
         if message.get("role") != 'tool':
             filtered_messages.append(message)
-            
+    if SYSTEM_PROMPT:
+        filtered_messages = [
+            {"role": "system", "content": SYSTEM_PROMPT}
+        ] + filtered_messages       
     request_body['messages'] = filtered_messages
     model_args = prepare_model_args(request_body, request_headers)
 
