@@ -1,19 +1,25 @@
-name: Docker Image Build
+name: Build and Push Docker Image
 
 on:
-  pull_request:
-    branches:
-    - main
+  push:
+    branches: [ "patch-1" ]
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run:         
-        docker build . --file WebApp.Dockerfile --tag sampleappaoaichatgpt.azurecr.io/sample-app-aoai-chatgpt:$(date +'%Y-%m-%d')_$GITHUB_RUN_NUMBER
-      
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build and Push to ACR
+        run: |
+          az acr build \
+            --registry sampleappaoaichatgpt \
+            --image sample-app-aoai-chatgpt:latest \
+            .
