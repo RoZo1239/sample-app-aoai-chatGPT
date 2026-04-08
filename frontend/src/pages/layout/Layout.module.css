@@ -44,6 +44,16 @@
   margin-right: 20px;
 }
 
+.topActionButton {
+  border: 1px solid #d1d1d1;
+  white-space: nowrap;
+}
+
+.topActionButton:hover,
+.topActionButton:active {
+  border: 1px solid #d1d1d1;
+}
+
 .shareButton {
   color: #ffffff;
 }
@@ -107,5 +117,15 @@
 
   .headerIcon {
     margin-left: 26px;
+  }
+  
+  .shareButtonContainer {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .topActionButton {
+    width: auto;
+    padding: 0 8px;
   }
 }
