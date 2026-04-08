@@ -22,7 +22,6 @@ jobs:
     - name: Build and Push
       run: |
         IMAGE_NAME=aztestwestus3backendacr.azurecr.io/sample-app-aoai-chatgpt
-
         TAG=patch1-${{ github.run_number }}
 
         echo "Using tag: $TAG"
