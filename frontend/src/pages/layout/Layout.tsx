@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
-import { Dialog, Stack, TextField } from '@fluentui/react'
+import { DefaultButton, Dialog, Stack, TextField } from '@fluentui/react'
 import { CopyRegular } from '@fluentui/react-icons'
 
 import { CosmosDBStatus } from '../../api'
@@ -20,6 +20,10 @@ const Layout = () => {
   const [logo, setLogo] = useState('')
   const appStateContext = useContext(AppStateContext)
   const ui = appStateContext?.state.frontendSettings?.ui
+  const scheduleMeetingUrl =
+    'https://outlook.office.com/bookwithme/user/4b7fbc393660415583a4a4eac09e3bfc%40milvetnavigator.com/booking/HOgA9kJb-0SXfHHK6rOZGw2?anonymous&ismsaljsauthenabled=true'
+  const scheduleDemoUrl =
+    'https://forms.office.com/Pages/ResponsePage.aspx?id=_TGI1G2FQk2gJgRPpEDtCxalQxmp6zNBsybDQDb60yBUMVNCVDhIUFJYMDJQUTUzM1YxSzdZMTA1TSQlQCN0PWcu'
 
   const handleShareClick = () => {
     setIsSharePanelOpen(true)
@@ -83,7 +87,21 @@ const Layout = () => {
               <h1 className={styles.headerTitle}>{ui?.title}</h1>
             </Link>
           </Stack>
-          <Stack horizontal tokens={{ childrenGap: 4 }} className={styles.shareButtonContainer}>
+          <Stack horizontal tokens={{ childrenGap: 8 }} className={styles.shareButtonContainer}>
+            <DefaultButton
+              className={styles.topActionButton}
+              text="Schedule a meeting"
+              href={scheduleMeetingUrl}
+              target="_blank"
+              rel="noreferrer"
+            />
+            <DefaultButton
+              className={styles.topActionButton}
+              text="Schedule a demo"
+              href={scheduleDemoUrl}
+              target="_blank"
+              rel="noreferrer"
+            />
             {appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && ui?.show_chat_history_button !== false && (
               <HistoryButton
                 onClick={handleHistoryClick}
@@ -95,6 +113,7 @@ const Layout = () => {
         </Stack>
       </header>
       <Outlet />
+      
       <Dialog
         onDismiss={handleSharePanelDismiss}
         hidden={!isSharePanelOpen}
