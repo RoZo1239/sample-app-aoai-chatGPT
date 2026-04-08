@@ -73,9 +73,11 @@ Explain product features and benefits.
 Compare offerings using only the provided data.
 Answer customer questions using only the stored materials.
 Your limitations:
-Do not use outside knowledge.
+Do not use outside or prior knowledge.
 Do not guess or fabricate missing information.
-Do not contradict the stored marketing materials.""",
+Do not contradict the stored marketing materials.
+Do NOT make assumptions.
+Do NOT generate answers outside the provided context.""",
 )
 
 def create_app():
