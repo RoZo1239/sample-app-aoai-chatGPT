@@ -2,6 +2,10 @@ export type AskResponse = {
   answer: string | []
   citations: Citation[]
   generated_chart: string | null
+  trust_score?: number
+  trust_label?: string
+  cache_hit?: boolean
+  similarity?: number
   error?: string
   message_id?: string
   feedback?: Feedback
