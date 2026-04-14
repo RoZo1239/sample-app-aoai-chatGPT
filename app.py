@@ -2,9 +2,12 @@ import copy
 import json
 import os
 import logging
+import re
 import uuid
 import httpx
 import asyncio
+from difflib import SequenceMatcher
+from datetime import datetime
 from quart import (
     Blueprint,
     Quart,
@@ -93,6 +96,120 @@ Safety and accuracy:
 - If unsure, acknowledge uncertainty and direct the user to official contact channels.
 """,
 )
+
+CACHE_SIMILARITY_THRESHOLD = float(os.getenv("QUESTION_CACHE_SIMILARITY_THRESHOLD", "0.9"))
+
+
+def normalize_question(question: str) -> str:
+    compact = re.sub(r"\s+", " ", question.strip().lower())
+    return re.sub(r"[^\w\s]", "", compact)
+
+
+def extract_latest_user_question(messages: list) -> str | None:
+    if not messages:
+        return None
+    for message in reversed(messages):
+        if message.get("role") == "user" and isinstance(message.get("content"), str):
+            return message["content"]
+    return None
+
+
+def extract_citation_count_from_response(response_payload: dict) -> int:
+    try:
+        response_messages = response_payload.get("choices", [{}])[0].get("messages", [])
+        for message in response_messages:
+            if message.get("role") == "tool" and message.get("content"):
+                tool_payload = json.loads(message["content"])
+                return len(tool_payload.get("citations", []))
+    except Exception:
+        return 0
+    return 0
+
+
+def calculate_trust_score(citation_count: int, cache_hit: bool = False, similarity: float = 0.0) -> float:
+    base = 0.45 + min(citation_count, 4) * 0.12
+    if cache_hit:
+        base = min(0.97, base + (0.05 if similarity >= 0.95 else 0.02))
+    return round(max(0.2, min(0.99, base)), 2)
+
+
+def trust_label(score: float) -> str:
+    if score >= 0.85:
+        return "high"
+    if score >= 0.65:
+        return "medium"
+    return "low"
+
+
+def add_trust_metadata_to_response(
+    response_payload: dict, trust_score: float, cache_hit: bool, similarity: float
+) -> dict:
+    quality = {
+        "trust_score": trust_score,
+        "trust_label": trust_label(trust_score),
+        "cache_hit": cache_hit,
+        "similarity": round(similarity, 3),
+    }
+    response_payload["answer_quality"] = quality
+    response_messages = response_payload.get("choices", [{}])[0].get("messages", [])
+    for message in response_messages:
+        if message.get("role") == "tool" and message.get("content"):
+            try:
+                tool_payload = json.loads(message["content"])
+                tool_payload.update(quality)
+                message["content"] = json.dumps(tool_payload)
+            except Exception:
+                continue
+    return response_payload
+
+
+async def find_similar_cached_answer(cosmos_client, user_id: str, question: str):
+    normalized_question = normalize_question(question)
+    candidates = await cosmos_client.get_recent_question_analytics(user_id=user_id, limit=40)
+    best_match = None
+    best_similarity = 0.0
+    for candidate in candidates:
+        candidate_normalized = candidate.get("normalizedQuestion", "")
+        if not candidate_normalized:
+            continue
+        similarity = SequenceMatcher(None, normalized_question, candidate_normalized).ratio()
+        if similarity > best_similarity:
+            best_similarity = similarity
+            best_match = candidate
+    if best_match and best_similarity >= CACHE_SIMILARITY_THRESHOLD:
+        return best_match, best_similarity
+    return None, 0.0
+
+
+def build_cached_response(history_metadata: dict, answer: str, quality: dict):
+    return {
+        "id": str(uuid.uuid4()),
+        "model": "cached-response",
+        "created": int(datetime.utcnow().timestamp()),
+        "object": "chat.completion",
+        "choices": [
+            {
+                "messages": [
+                    {
+                        "role": "tool",
+                        "content": json.dumps(
+                            {
+                                "citations": [],
+                                "trust_score": quality["trust_score"],
+                                "trust_label": quality["trust_label"],
+                                "cache_hit": quality["cache_hit"],
+                                "similarity": quality["similarity"],
+                            }
+                        ),
+                    },
+                    {"role": "assistant", "content": answer},
+                ]
+            }
+        ],
+        "history_metadata": history_metadata,
+        "apim-request-id": "cache-hit",
+        "answer_quality": quality,
+    }
 
 def create_app():
     app = Quart(__name__)
@@ -516,7 +633,11 @@ async def complete_chat_request(request_body, request_headers):
                 response, apim_request_id = await send_chat_request(request_body, request_headers)
                 history_metadata = request_body.get("history_metadata", {})
                 non_streaming_response = format_non_streaming_response(response, history_metadata, apim_request_id)
-
+        citation_count = extract_citation_count_from_response(non_streaming_response)
+        score = calculate_trust_score(citation_count=citation_count)
+        non_streaming_response = add_trust_metadata_to_response(
+            non_streaming_response, score, cache_hit=False, similarity=0.0
+        )
     return non_streaming_response
 
 class AzureOpenaiFunctionCallStreamState():
@@ -697,7 +818,29 @@ async def add_conversation():
                 )
         else:
             raise Exception("No user message found")
-
+        latest_question = extract_latest_user_question(messages)
+        if latest_question:
+            matched_question_entry, similarity = await find_similar_cached_answer(
+                current_app.cosmos_conversation_client, user_id, latest_question
+            )
+            if matched_question_entry:
+                await current_app.cosmos_conversation_client.increment_question_cache_hit(
+                    user_id=user_id, question_entry_id=matched_question_entry["id"]
+                )
+                history_metadata["conversation_id"] = conversation_id
+                cached_score = matched_question_entry.get("trustScore", 0.75)
+                cached_quality = {
+                    "trust_score": cached_score,
+                    "trust_label": trust_label(cached_score),
+                    "cache_hit": True,
+                    "similarity": round(similarity, 3),
+                }
+                cached_response = build_cached_response(
+                    history_metadata=history_metadata,
+                    answer=matched_question_entry.get("answer", ""),
+                    quality=cached_quality,
+                )
+                return jsonify(cached_response), 200
         # Submit request to Chat Completions for response
         request_body = await request.get_json()
         history_metadata["conversation_id"] = conversation_id
@@ -749,7 +892,39 @@ async def update_conversation():
             )
         else:
             raise Exception("No bot messages found")
+         latest_question = None
+            try:
+                conversation_messages = await current_app.cosmos_conversation_client.get_messages(
+                    user_id=user_id, conversation_id=conversation_id
+                )
+                user_messages = [msg for msg in conversation_messages if msg.get("role") == "user"]
+                if user_messages:
+                    latest_question = user_messages[-1].get("content", "")
+            except Exception:
+                latest_question = None
 
+            if latest_question:
+                answer_text = messages[-1].get("content", "")
+                citation_count = 0
+                if len(messages) > 1 and messages[-2].get("role") == "tool":
+                    try:
+                        tool_payload = json.loads(messages[-2].get("content", "{}"))
+                        citation_count = len(tool_payload.get("citations", []))
+                    except Exception:
+                        citation_count = 0
+                answer_quality = request_json.get("answer_quality", {})
+                trust_score_value = answer_quality.get(
+                    "trust_score", calculate_trust_score(citation_count)
+                )
+                await current_app.cosmos_conversation_client.create_question_analytics(
+                    user_id=user_id,
+                    conversation_id=conversation_id,
+                    question=latest_question,
+                    normalized_question=normalize_question(latest_question),
+                    answer=answer_text,
+                    trust_score=trust_score_value,
+                    citation_count=citation_count,
+                )
         # Submit request to Chat Completions for response
         response = {"success": True}
         return jsonify(response), 200
@@ -757,6 +932,21 @@ async def update_conversation():
     except Exception as e:
         logging.exception("Exception in /history/update")
         return jsonify({"error": str(e)}), 500
+
+@bp.route("/history/questions", methods=["GET"])
+async def list_question_analytics():
+    await cosmos_db_ready.wait()
+    authenticated_user = get_authenticated_user_details(request_headers=request.headers)
+    user_id = authenticated_user["user_principal_id"]
+    limit = request.args.get("limit", default=20, type=int)
+
+    if not current_app.cosmos_conversation_client:
+        return jsonify({"error": "CosmosDB is not configured or not working"}), 500
+
+    entries = await current_app.cosmos_conversation_client.get_recent_question_analytics(
+        user_id=user_id, limit=limit
+    )
+    return jsonify(entries), 200
 
 
 @bp.route("/history/message_feedback", methods=["POST"])
