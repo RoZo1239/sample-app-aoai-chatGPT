@@ -728,6 +728,23 @@ const Chat = () => {
     return []
   }
 
+  const parseTrustFromMessage = (message: ChatMessage) => {
+    if (message?.role && message?.role === 'tool' && typeof message?.content === "string") {
+      try {
+        const toolMessage = JSON.parse(message.content)
+        return {
+          trust_score: toolMessage.trust_score as number | undefined,
+          trust_label: toolMessage.trust_label as string | undefined,
+          cache_hit: toolMessage.cache_hit as boolean | undefined,
+          similarity: toolMessage.similarity as number | undefined
+        }
+      } catch {
+        return {}
+      }
+    }
+    return {}
+  }
+
   const parsePlotFromMessage = (message: ChatMessage) => {
     if (message?.role && message?.role === "tool" && typeof message?.content === "string") {
       try {
@@ -812,6 +829,10 @@ const Chat = () => {
                             answer: answer.content,
                             citations: parseCitationFromMessage(messages[index - 1]),
                             generated_chart: parsePlotFromMessage(messages[index - 1]),
+                            trust_score: parseTrustFromMessage(messages[index - 1]).trust_score,
+                            trust_label: parseTrustFromMessage(messages[index - 1]).trust_label,
+                            cache_hit: parseTrustFromMessage(messages[index - 1]).cache_hit,
+                            similarity: parseTrustFromMessage(messages[index - 1]).similarity,
                             message_id: answer.id,
                             feedback: answer.feedback,
                             exec_results: execResults
