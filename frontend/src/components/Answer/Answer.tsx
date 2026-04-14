@@ -325,6 +325,12 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked }: Prop
           )}
           <Stack.Item className={styles.answerDisclaimerContainer}>
             <span className={styles.answerDisclaimer}>AI-generated content may be incorrect</span>
+            {typeof answer.trust_score === 'number' && (
+              <span className={styles.answerDisclaimer}>
+                {' '}• Trust: {(answer.trust_score * 100).toFixed(0)}% ({answer.trust_label ?? 'unknown'})
+                {answer.cache_hit ? ' • cached similar answer' : ''}
+              </span>
+            )}
           </Stack.Item>
           {!!answer.exec_results?.length && (
             <Stack.Item onKeyDown={e => (e.key === 'Enter' || e.key === ' ' ? toggleIsRefAccordionOpen() : null)}>
