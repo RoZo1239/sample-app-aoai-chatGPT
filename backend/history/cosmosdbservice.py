@@ -180,4 +180,57 @@ class CosmosConversationClient():
             messages.append(item)
 
         return messages
+    async def create_question_analytics(
+        self,
+        user_id: str,
+        conversation_id: str,
+        question: str,
+        normalized_question: str,
+        answer: str,
+        trust_score: float,
+        citation_count: int,
+    ):
+        now = datetime.utcnow().isoformat()
+        question_item = {
+            "id": str(uuid.uuid4()),
+            "type": "question_analytics",
+            "userId": user_id,
+            "conversationId": conversation_id,
+            "question": question,
+            "normalizedQuestion": normalized_question,
+            "answer": answer,
+            "trustScore": trust_score,
+            "citationCount": citation_count,
+            "cacheHitCount": 0,
+            "createdAt": now,
+            "updatedAt": now,
+        }
+        return await self.container_client.upsert_item(question_item)
+
+    async def increment_question_cache_hit(self, user_id: str, question_entry_id: str):
+        question_entry = await self.container_client.read_item(
+            item=question_entry_id, partition_key=user_id
+        )
+        if question_entry:
+            question_entry["cacheHitCount"] = question_entry.get("cacheHitCount", 0) + 1
+            question_entry["updatedAt"] = datetime.utcnow().isoformat()
+            return await self.container_client.upsert_item(question_entry)
+        return False
+
+    async def get_recent_question_analytics(self, user_id: str, limit: int = 30):
+        parameters = [{"name": "@userId", "value": user_id}]
+        query = (
+            "SELECT * FROM c "
+            "WHERE c.userId = @userId and c.type='question_analytics' "
+            "ORDER BY c.updatedAt DESC "
+            f"OFFSET 0 LIMIT {limit}"
+        )
+        question_entries = []
+        async for item in self.container_client.query_items(
+            query=query, parameters=parameters
+        ):
+            question_entries.append(item)
+        return question_entries
+
+
 
