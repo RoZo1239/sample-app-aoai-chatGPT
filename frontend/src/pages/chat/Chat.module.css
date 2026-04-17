@@ -20,7 +20,17 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: radial-gradient(108.78% 108.78% at 50.02% 19.78%, #ffffff 57.29%, #eef6fe 100%);
+  /*
+    Two-layer background:
+    1. Semi-transparent radial gradient (front) — preserves the white/blue wash.
+    2. MVN logo SVG (behind the gradient) — acts as a centered watermark.
+    background-attachment: scroll (default) keeps the logo fixed to the visible
+    viewport area, so it does not move as messages are scrolled.
+  */
+  background:
+    radial-gradient(108.78% 108.78% at 50.02% 19.78%, rgba(255, 255, 255, 0.92) 57.29%, rgba(238, 246, 254, 0.92) 100%),
+    url('../../assets/MVN-logo.svg') center center / 65% auto no-repeat,
+    #ffffff;
   box-shadow:
     0px 2px 4px rgba(0, 0, 0, 0.14),
     0px 0px 2px rgba(0, 0, 0, 0.12);
@@ -62,8 +72,11 @@
 }
 
 .chatIcon {
-  height: 62px;
-  width: auto;
+  /* Horizontal logo — constrain width so it fits comfortably in the empty-state panel */
+  height: auto;
+  width: 340px;
+  max-width: 75%;
+  object-fit: contain;
 }
 
 .chatMessageStream {
