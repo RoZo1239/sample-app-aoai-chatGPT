@@ -235,6 +235,12 @@ Instead, handle it naturally:
 """,
 )
 
+RESPONSE_GUARDRAILS_PROMPT = f"""
+Enforce these rules in every response:
+- Never share personal contact names, personal emails, or phone numbers; only use {MVN_SUPPORT_EMAIL} and "the MilVet Navigator team".
+- Never provide pricing, cost, tuition, or any monetary values. If asked, direct the user to {MVN_SUPPORT_EMAIL} or the top-right "Schedule a Demo"/"Schedule a Meeting" buttons.
+"""
+
 CACHE_SIMILARITY_THRESHOLD = float(os.getenv("QUESTION_CACHE_SIMILARITY_THRESHOLD", "0.9"))
 
 
@@ -549,9 +555,10 @@ async def init_cosmosdb_client():
 
 def prepare_model_args(request_body, request_headers):
     request_messages = request_body.get("messages", [])
-    messages = [
-    {"role": "system", "content": SYSTEM_PROMPT}
-]
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    if RESPONSE_GUARDRAILS_PROMPT:
+        messages.append({"role": "system", "content": RESPONSE_GUARDRAILS_PROMPT})
+
 
     for message in request_messages:
         if message:
@@ -727,11 +734,7 @@ async def send_chat_request(request_body, request_headers):
     messages = request_body.get("messages", [])
     for message in messages:
         if message.get("role") != 'tool':
-            filtered_messages.append(message)
-    if SYSTEM_PROMPT:
-        filtered_messages = [
-            {"role": "system", "content": SYSTEM_PROMPT}
-        ] + filtered_messages       
+            filtered_messages.append(message)      
     request_body['messages'] = filtered_messages
     model_args = prepare_model_args(request_body, request_headers)
 
