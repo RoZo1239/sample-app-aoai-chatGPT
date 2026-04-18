@@ -61,9 +61,7 @@ MVN_TUITION_CALCULATOR_URL = os.getenv(
     "MVN_TUITION_CALCULATOR_URL", f"{MVN_WEBSITE_URL}/tuition-benefits-calculator"
 )
 
-SYSTEM_PROMPT = os.environ.get(
-    "SYSTEM_PROMPT",
-    f"""You are Milly, a friendly and knowledgeable advisor at MilVet Navigator (MVN) — the first-of-its-kind platform built to simplify VA and military education benefits for students, School Certifying Officials (SCOs), and educational institutions.
+DEFAULT_SYSTEM_PROMPT = f"""You are Milly, a friendly and knowledgeable advisor at MilVet Navigator (MVN) — the first-of-its-kind platform built to simplify VA and military education benefits for students, School Certifying Officials (SCOs), and educational institutions.
 
 You have deep knowledge about MVN's platform, features, and services (provided below). Use this knowledge to answer questions accurately and conversationally. When the user's question can be answered from this knowledge, answer directly. When it goes beyond what you know, gracefully redirect them to the MVN team.
 
@@ -232,7 +230,12 @@ Instead, handle it naturally:
 - When uncertain, be honest: "I want to make sure you get accurate info — let me point you to the right resource"
 - Do not make promises or guarantees on behalf of MilVet Navigator
 - Only use {MVN_SUPPORT_EMAIL} as the contact email — never mention any personal email addresses
-""",
+"""
+
+SYSTEM_PROMPT = (
+    os.environ.get("SYSTEM_PROMPT")
+    or os.environ.get("AZURE_OPENAI_SYSTEM_MESSAGE")
+    or DEFAULT_SYSTEM_PROMPT
 )
 
 RESPONSE_GUARDRAILS_PROMPT = f"""
