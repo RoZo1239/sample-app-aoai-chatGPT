@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import re
 import requests
 import dataclasses
 
@@ -13,6 +14,22 @@ if DEBUG.lower() == "true":
 AZURE_SEARCH_PERMITTED_GROUPS_COLUMN = os.environ.get(
     "AZURE_SEARCH_PERMITTED_GROUPS_COLUMN"
 )
+
+_OFFICIAL_EMAIL = "info@milvetnavigator.com"
+_MVN_EMAIL_RE = re.compile(r'[\w.-]+@milvetnavigator\.com', re.IGNORECASE)
+_PHONE_RE = re.compile(r'\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b')
+_CONTACT_NAME_RE = re.compile(
+    r'(Point\s+of\s+Contact(?:\s+Name)?\s*:\s*)(\S+(?:\s+\S+)?)',
+    re.IGNORECASE,
+)
+
+def sanitize_response_content(content):
+    if not content:
+        return content
+    content = _MVN_EMAIL_RE.sub(_OFFICIAL_EMAIL, content)
+    content = _PHONE_RE.sub(_OFFICIAL_EMAIL, content)
+    content = _CONTACT_NAME_RE.sub(r'\1MilVet Navigator team', content)
+    return content
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -93,13 +110,13 @@ def format_non_streaming_response(chatCompletion, history_metadata, apim_request
                 response_obj["choices"][0]["messages"].append(
                     {
                         "role": "tool",
-                        "content": json.dumps(message.context),
+                        "content": sanitize_response_content(json.dumps(message.context)),
                     }
                 )
             response_obj["choices"][0]["messages"].append(
                 {
                     "role": "assistant",
-                    "content": message.content,
+                    "content": sanitize_response_content(message.content),
                 }
             )
             return response_obj
@@ -121,7 +138,7 @@ def format_stream_response(chatCompletionChunk, history_metadata, apim_request_i
         delta = chatCompletionChunk.choices[0].delta
         if delta:
             if hasattr(delta, "context"):
-                messageObj = {"role": "tool", "content": json.dumps(delta.context)}
+                messageObj = {"role": "tool", "content": sanitize_response_content(json.dumps(delta.context))}
                 response_obj["choices"][0]["messages"].append(messageObj)
                 return response_obj
             if delta.role == "assistant" and hasattr(delta, "context"):
@@ -144,14 +161,14 @@ def format_stream_response(chatCompletionChunk, history_metadata, apim_request_i
                     }
                 }
                 if hasattr(delta, "context"):
-                    messageObj["context"] = json.dumps(delta.context)
+                    messageObj["context"] = sanitize_response_content(json.dumps(delta.context))
                 response_obj["choices"][0]["messages"].append(messageObj)
                 return response_obj
             else:
                 if delta.content:
                     messageObj = {
                         "role": "assistant",
-                        "content": delta.content,
+                        "content": sanitize_response_content(delta.content),
                     }
                     response_obj["choices"][0]["messages"].append(messageObj)
                     return response_obj
