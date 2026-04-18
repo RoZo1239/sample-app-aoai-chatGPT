@@ -909,7 +909,7 @@ async def update_conversation():
             )
         else:
             raise Exception("No bot messages found")
-         latest_question = None
+        latest_question = None
         try:
             conversation_messages = await current_app.cosmos_conversation_client.get_messages(
                 user_id=user_id, conversation_id=conversation_id
