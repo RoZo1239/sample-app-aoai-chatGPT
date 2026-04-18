@@ -909,39 +909,39 @@ async def update_conversation():
             )
         else:
             raise Exception("No bot messages found")
-         latest_question = None
-            try:
-                conversation_messages = await current_app.cosmos_conversation_client.get_messages(
-                    user_id=user_id, conversation_id=conversation_id
-                )
-                user_messages = [msg for msg in conversation_messages if msg.get("role") == "user"]
-                if user_messages:
-                    latest_question = user_messages[-1].get("content", "")
-            except Exception:
-                latest_question = None
+        latest_question = None
+        try:
+            conversation_messages = await current_app.cosmos_conversation_client.get_messages(
+                user_id=user_id, conversation_id=conversation_id
+            )
+            user_messages = [msg for msg in conversation_messages if msg.get("role") == "user"]
+            if user_messages:
+                latest_question = user_messages[-1].get("content", "")
+        except Exception:
+            latest_question = None
 
-            if latest_question:
-                answer_text = messages[-1].get("content", "")
-                citation_count = 0
-                if len(messages) > 1 and messages[-2].get("role") == "tool":
-                    try:
-                        tool_payload = json.loads(messages[-2].get("content", "{}"))
-                        citation_count = len(tool_payload.get("citations", []))
-                    except Exception:
-                        citation_count = 0
-                answer_quality = request_json.get("answer_quality", {})
-                trust_score_value = answer_quality.get(
-                    "trust_score", calculate_trust_score(citation_count)
-                )
-                await current_app.cosmos_conversation_client.create_question_analytics(
-                    user_id=user_id,
-                    conversation_id=conversation_id,
-                    question=latest_question,
-                    normalized_question=normalize_question(latest_question),
-                    answer=answer_text,
-                    trust_score=trust_score_value,
-                    citation_count=citation_count,
-                )
+        if latest_question:
+            answer_text = messages[-1].get("content", "")
+            citation_count = 0
+            if len(messages) > 1 and messages[-2].get("role") == "tool":
+                try:
+                    tool_payload = json.loads(messages[-2].get("content", "{}"))
+                    citation_count = len(tool_payload.get("citations", []))
+                except Exception:
+                    citation_count = 0
+            answer_quality = request_json.get("answer_quality", {})
+            trust_score_value = answer_quality.get(
+                "trust_score", calculate_trust_score(citation_count)
+            )
+            await current_app.cosmos_conversation_client.create_question_analytics(
+                user_id=user_id,
+                conversation_id=conversation_id,
+                question=latest_question,
+                normalized_question=normalize_question(latest_question),
+                answer=answer_text,
+                trust_score=trust_score_value,
+                citation_count=citation_count,
+            )
         # Submit request to Chat Completions for response
         response = {"success": True}
         return jsonify(response), 200
