@@ -28,6 +28,15 @@ _MONEY_RE = re.compile(
     re.IGNORECASE,
 )
 _MONEY_REPLACEMENT = "For pricing or financial details, please contact the MilVet Navigator team at " + _OFFICIAL_EMAIL
+_RETRIEVAL_DEAD_END_RE = re.compile(
+    r"the requested information is not available in the retrieved data\.?\s*please try another query or topic\.?",
+    re.IGNORECASE,
+)
+_RETRIEVAL_DEAD_END_REPLACEMENT = (
+    f"I want to make sure you get accurate details. I don't see enough verified context for that yet, "
+    f"but the MilVet Navigator team can help right away at {_OFFICIAL_EMAIL}. "
+    f"You can also use the “Schedule a Demo” or “Schedule a Meeting” buttons in the top-right corner."
+)
 
 def sanitize_response_content(content):
     if not content:
@@ -37,6 +46,7 @@ def sanitize_response_content(content):
     content = _CONTACT_NAME_RE.sub(r'\1MilVet Navigator team', content)
     content = _LEGACY_CONTACT_NAME_RE.sub("MilVet Navigator team", content)
     content = _MONEY_RE.sub(_MONEY_REPLACEMENT, content)
+    content = _RETRIEVAL_DEAD_END_RE.sub(_RETRIEVAL_DEAD_END_REPLACEMENT, content)
     return content
 
 
