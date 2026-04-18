@@ -15,13 +15,19 @@ AZURE_SEARCH_PERMITTED_GROUPS_COLUMN = os.environ.get(
     "AZURE_SEARCH_PERMITTED_GROUPS_COLUMN"
 )
 
-_OFFICIAL_EMAIL = "info@milvetnavigator.com"
+_OFFICIAL_EMAIL = os.environ.get("MVN_SUPPORT_EMAIL", "info@milvetnavigator.com")
 _MVN_EMAIL_RE = re.compile(r'[\w.-]+@milvetnavigator\.com', re.IGNORECASE)
 _PHONE_RE = re.compile(r'\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b')
 _CONTACT_NAME_RE = re.compile(
     r'(Point\s+of\s+Contact(?:\s+Name)?\s*:\s*)(\S+(?:\s+\S+)?)',
     re.IGNORECASE,
 )
+_LEGACY_CONTACT_NAME_RE = re.compile(r'\bMahdi\s+Omar\b', re.IGNORECASE)
+_MONEY_RE = re.compile(
+    r'(\$\s?\d[\d,]*(?:\.\d+)?(?:\s?(?:k|m|b|thousand|million|billion))?|\b\d[\d,]*(?:\.\d+)?\s?(?:USD|dollars?)\b)',
+    re.IGNORECASE,
+)
+_MONEY_REPLACEMENT = "For pricing or financial details, please contact the MilVet Navigator team at " + _OFFICIAL_EMAIL
 
 def sanitize_response_content(content):
     if not content:
@@ -29,6 +35,8 @@ def sanitize_response_content(content):
     content = _MVN_EMAIL_RE.sub(_OFFICIAL_EMAIL, content)
     content = _PHONE_RE.sub(_OFFICIAL_EMAIL, content)
     content = _CONTACT_NAME_RE.sub(r'\1MilVet Navigator team', content)
+    content = _LEGACY_CONTACT_NAME_RE.sub("MilVet Navigator team", content)
+    content = _MONEY_RE.sub(_MONEY_REPLACEMENT, content)
     return content
 
 
@@ -196,13 +204,13 @@ def format_pf_non_streaming_response(
         if response_field_name in chatCompletion:
             messages.append({
                 "role": "assistant",
-                "content": chatCompletion[response_field_name] 
+                "content": sanitize_response_content(chatCompletion[response_field_name]) 
             })
         if citations_field_name in chatCompletion:
             citation_content= {"citations": chatCompletion[citations_field_name]}
             messages.append({ 
                 "role": "tool",
-                "content": json.dumps(citation_content)
+                "content": sanitize_response_content(json.dumps(citation_content))
             })
 
         response_obj = {
