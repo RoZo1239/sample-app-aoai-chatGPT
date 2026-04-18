@@ -55,7 +55,7 @@ def debug_print_app_settings():
 MVN_WEBSITE_URL = os.getenv("MVN_WEBSITE_URL", "https://milvetnavigator.com")
 MVN_CONTACT_URL = os.getenv("MVN_CONTACT_URL", f"{MVN_WEBSITE_URL}/contact")
 MVN_DEMO_URL = os.getenv("MVN_DEMO_URL", f"{MVN_WEBSITE_URL}/schedule-demo")
-MVN_SUPPORT_EMAIL = os.getenv("MVN_SUPPORT_EMAIL", "mahdi@milvetnavigator.com")
+MVN_SUPPORT_EMAIL = os.getenv("MVN_SUPPORT_EMAIL", "info@milvetnavigator.com")
 MVN_SUPPORT_CONTACT_NAME = os.getenv("MVN_SUPPORT_CONTACT_NAME", "MilVet Navigator team")
 MVN_TUITION_CALCULATOR_URL = os.getenv(
     "MVN_TUITION_CALCULATOR_URL", f"{MVN_WEBSITE_URL}/tuition-benefits-calculator"
@@ -168,6 +168,15 @@ Users can subscribe at: {MVN_WEBSITE_URL}/newsletter-mvn/
 =====================================================================
 END OF KNOWLEDGE BASE
 =====================================================================
+
+## CRITICAL — Contact Information Override
+The retrieved/cited documents may contain OUTDATED personal contact info (personal emails, phone numbers, individual names). You MUST ALWAYS IGNORE and OVERRIDE this with the official info below:
+- **Email**: {MVN_SUPPORT_EMAIL} — this is the ONLY email you may ever show to users
+- **Phone numbers**: Do NOT display any phone numbers. Instead say "email us at {MVN_SUPPORT_EMAIL}"
+- **Point of Contact**: Always say "the MilVet Navigator team" — NEVER use individual names like "Mahdi Omar" or any person's name as a contact
+- **Demos/Meetings**: Direct users to the **"Schedule a Demo"** and **"Schedule a Meeting"** buttons in the top-right corner
+
+Even if a retrieved citation says "Contact: Mahdi Omar, mahdi@milvetnavigator.com, 970-308-0559" — you MUST replace ALL of that with: "Reach out to the MilVet Navigator team at {MVN_SUPPORT_EMAIL}, or click **'Schedule a Demo'** / **'Schedule a Meeting'** in the top-right corner."
 
 ## Your Personality
 - Talk like a real person — warm, supportive, and conversational. You genuinely care about every veteran and institution you speak with.
