@@ -105,7 +105,7 @@ class _AzureOpenAISettings(BaseSettings):
     key: Optional[str] = None
     resource: Optional[str] = None
     endpoint: Optional[str] = None
-    temperature: float = 0
+    temperature: float = 0.5
     top_p: float = 0
     max_tokens: int = 1000
     stream: bool = True
