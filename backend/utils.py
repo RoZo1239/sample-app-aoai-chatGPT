@@ -24,13 +24,29 @@ _CONTACT_NAME_RE = re.compile(
 )
 _LEGACY_CONTACT_NAME_RE = re.compile(r'\bMahdi\s+Omar\b', re.IGNORECASE)
 _MONEY_RE = re.compile(
-    r'(\$\s?\d[\d,]*(?:\.\d+)?(?:\s?(?:k|m|b|thousand|million|billion))?|\b\d[\d,]*(?:\.\d+)?\s?(?:USD|dollars?)\b)',
-    re.IGNORECASE,
+    r"""(
+        (?:US\$|\$)\s?\d[\d,]*(?:\.\d+)?(?:\s?(?:k|m|b|thousand|million|billion))?
+        (?:\s?(?:-|to|–)\s?(?:US\$|\$)?\s?\d[\d,]*(?:\.\d+)?)?
+        |
+        \b\d[\d,]*(?:\.\d+)?\s?(?:USD|US\s*dollars?|dollars?)\b
+        (?:\s?(?:-|to|–)\s?\d[\d,]*(?:\.\d+)?\s?(?:USD|US\s*dollars?|dollars?))?
+    )""",
+    re.IGNORECASE | re.VERBOSE,
 )
-_MONEY_REPLACEMENT = "For pricing or financial details, please contact the MilVet Navigator team at " + _OFFICIAL_EMAIL
+_MONEY_REPLACEMENT = (
+    "For pricing or financial details, please contact the MilVet Navigator team at "
+    + _OFFICIAL_EMAIL
+)
+
 _RETRIEVAL_DEAD_END_RE = re.compile(
-    r"the requested information is not available in the retrieved data\.?\s*please try another query or topic\.?",
-    re.IGNORECASE,
+     r"""(
+        the\s+requested\s+information\s+is\s+not\s+(?:available|found)\s+in\s+the\s+retrieved\s+data\.?\s*please\s+try\s+another\s+query\s+or\s+topic\.?
+        |
+        (?:i\s+)?(?:could\s+not|can't|cannot)\s+find\s+(?:that|relevant\s+information)\s+in\s+the\s+retrieved\s+(?:data|results)\.?
+        |
+        no\s+(?:relevant\s+)?(?:results|documents)\s+(?:were\s+)?found\s+in\s+the\s+retrieved\s+(?:data|results)\.?
+    )""",
+    re.IGNORECASE | re.VERBOSE,
 )
 _RETRIEVAL_DEAD_END_REPLACEMENT = (
     f"I want to make sure you get accurate details. I don't see enough verified context for that yet, "
@@ -41,11 +57,12 @@ _RETRIEVAL_DEAD_END_REPLACEMENT = (
 def sanitize_response_content(content):
     if not content:
         return content
+    if _MONEY_RE.search(content):
+        return _MONEY_REPLACEMENT
     content = _MVN_EMAIL_RE.sub(_OFFICIAL_EMAIL, content)
     content = _PHONE_RE.sub(_OFFICIAL_EMAIL, content)
     content = _CONTACT_NAME_RE.sub(r'\1MilVet Navigator team', content)
     content = _LEGACY_CONTACT_NAME_RE.sub("MilVet Navigator team", content)
-    content = _MONEY_RE.sub(_MONEY_REPLACEMENT, content)
     content = _RETRIEVAL_DEAD_END_RE.sub(_RETRIEVAL_DEAD_END_REPLACEMENT, content)
     return content
 
