@@ -61,7 +61,9 @@ MVN_TUITION_CALCULATOR_URL = os.getenv(
     "MVN_TUITION_CALCULATOR_URL", f"{MVN_WEBSITE_URL}/tuition-benefits-calculator"
 )
 
-DEFAULT_SYSTEM_PROMPT = f"""You are Milly, a friendly and knowledgeable advisor at MilVet Navigator (MVN) — the first-of-its-kind platform built to simplify VA and military education benefits for students, School Certifying Officials (SCOs), and educational institutions.
+SYSTEM_PROMPT = os.environ.get(
+    "SYSTEM_PROMPT",
+    f"""You are Milly, a friendly and knowledgeable advisor at MilVet Navigator (MVN) — the first-of-its-kind platform built to simplify VA and military education benefits for students, School Certifying Officials (SCOs), and educational institutions.
 
 You have deep knowledge about MVN's platform, features, and services (provided below). Use this knowledge to answer questions accurately and conversationally. When the user's question can be answered from this knowledge, answer directly. When it goes beyond what you know, gracefully redirect them to the MVN team.
 
@@ -230,19 +232,11 @@ Instead, handle it naturally:
 - When uncertain, be honest: "I want to make sure you get accurate info — let me point you to the right resource"
 - Do not make promises or guarantees on behalf of MilVet Navigator
 - Only use {MVN_SUPPORT_EMAIL} as the contact email — never mention any personal email addresses
-"""
-
-SYSTEM_PROMPT = (
-    os.environ.get("SYSTEM_PROMPT")
-    or os.environ.get("AZURE_OPENAI_SYSTEM_MESSAGE")
-    or DEFAULT_SYSTEM_PROMPT
+""",
 )
 
-RESPONSE_GUARDRAILS_PROMPT = f"""
-Enforce these rules in every response:
-- Never share personal contact names, personal emails, or phone numbers; only use {MVN_SUPPORT_EMAIL} and "the MilVet Navigator team".
-- Never provide pricing, cost, tuition, or any monetary values. If asked, direct the user to {MVN_SUPPORT_EMAIL} or the top-right "Schedule a Demo"/"Schedule a Meeting" buttons.
-"""
+if app_settings.datasource and hasattr(app_settings, 'search'):
+    app_settings.search.role_information = SYSTEM_PROMPT
 
 CACHE_SIMILARITY_THRESHOLD = float(os.getenv("QUESTION_CACHE_SIMILARITY_THRESHOLD", "0.9"))
 
@@ -558,10 +552,9 @@ async def init_cosmosdb_client():
 
 def prepare_model_args(request_body, request_headers):
     request_messages = request_body.get("messages", [])
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    if RESPONSE_GUARDRAILS_PROMPT:
-        messages.append({"role": "system", "content": RESPONSE_GUARDRAILS_PROMPT})
-
+    messages = [
+    {"role": "system", "content": SYSTEM_PROMPT}
+]
 
     for message in request_messages:
         if message:
@@ -737,7 +730,7 @@ async def send_chat_request(request_body, request_headers):
     messages = request_body.get("messages", [])
     for message in messages:
         if message.get("role") != 'tool':
-            filtered_messages.append(message)      
+            filtered_messages.append(message)
     request_body['messages'] = filtered_messages
     model_args = prepare_model_args(request_body, request_headers)
 
