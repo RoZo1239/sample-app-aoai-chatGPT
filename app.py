@@ -235,6 +235,9 @@ Instead, handle it naturally:
 """,
 )
 
+if app_settings.datasource and hasattr(app_settings, 'search'):
+    app_settings.search.role_information = SYSTEM_PROMPT
+
 CACHE_SIMILARITY_THRESHOLD = float(os.getenv("QUESTION_CACHE_SIMILARITY_THRESHOLD", "0.9"))
 
 
@@ -728,10 +731,6 @@ async def send_chat_request(request_body, request_headers):
     for message in messages:
         if message.get("role") != 'tool':
             filtered_messages.append(message)
-    if SYSTEM_PROMPT:
-        filtered_messages = [
-            {"role": "system", "content": SYSTEM_PROMPT}
-        ] + filtered_messages       
     request_body['messages'] = filtered_messages
     model_args = prepare_model_args(request_body, request_headers)
 
