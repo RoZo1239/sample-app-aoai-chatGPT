@@ -45,6 +45,12 @@ const enum messageStatus {
   Done = 'Done'
 }
 
+const SUGGESTED_QUESTIONS = [
+  'What does MVN help SCOs with?',
+  'How does VA certification work with MilVet Navigator?',
+  'Which student information systems does MVN integrate with?'
+]
+
 const Chat = () => {
   const appStateContext = useContext(AppStateContext)
   const ui = appStateContext?.state.frontendSettings?.ui
@@ -65,6 +71,12 @@ const Chat = () => {
   const [errorMsg, setErrorMsg] = useState<ErrorMessage | null>()
   const [logo, setLogo] = useState('')
   const [answerId, setAnswerId] = useState<string>('')
+
+  const handleSuggestedQuestion = (question: string) => {
+    appStateContext?.state.isCosmosDBAvailable?.cosmosDB
+      ? makeApiRequestWithCosmosDB(question)
+      : makeApiRequestWithoutCosmosDB(question)
+  }
 
   const errorDialogContentProps = {
     type: DialogType.close,
@@ -811,6 +823,19 @@ const Chat = () => {
                 <img src={logo} className={styles.chatIcon} aria-hidden="true" />
                 <h1 className={styles.chatEmptyStateTitle}>{ui?.chat_title}</h1>
                 <h2 className={styles.chatEmptyStateSubtitle}>{ui?.chat_description}</h2>
+                <div className={styles.suggestedQuestionsSection}>
+                  <span className={styles.suggestedQuestionsLabel}>Suggested questions</span>
+                  {SUGGESTED_QUESTIONS.map((q, i) => (
+                    <button
+                      key={i}
+                      className={styles.suggestedQuestionButton}
+                      onClick={() => handleSuggestedQuestion(q)}
+                      disabled={isLoading}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
               </Stack>
             ) : (
               <div className={styles.chatMessageStream} style={{ marginBottom: isLoading ? '40px' : '0px' }} role="log">
