@@ -79,6 +79,49 @@
   object-fit: contain;
 }
 
+.suggestedQuestionsSection {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  margin-top: 32px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.suggestedQuestionsLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: #8a8886;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.suggestedQuestionButton {
+  background: #ffffff;
+  border: 1px solid #e1e1e1;
+  border-radius: 8px;
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 14px;
+  font-family: 'Segoe UI', sans-serif;
+  color: #242424;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.suggestedQuestionButton:hover:not(:disabled) {
+  background: #f3f9ff;
+  border-color: #0f6cbd;
+}
+
+.suggestedQuestionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .chatMessageStream {
   flex-grow: 1;
   max-width: 1028px;
