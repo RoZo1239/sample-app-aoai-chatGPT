@@ -33,6 +33,7 @@ _MONEY_RE = re.compile(
     )""",
     re.IGNORECASE | re.VERBOSE,
 )
+_EMAIL_PLACEHOLDER_RE = re.compile(r"\{+\s*MVN_SUPPORT_EMAIL\s*\}+")
 _MONEY_REPLACEMENT = (
     "For pricing or financial details, please contact the MilVet Navigator team at "
     + _OFFICIAL_EMAIL
@@ -57,6 +58,7 @@ _RETRIEVAL_DEAD_END_REPLACEMENT = (
 def sanitize_response_content(content):
     if not content:
         return content
+    content = _EMAIL_PLACEHOLDER_RE.sub(_OFFICIAL_EMAIL, content)
     if _MONEY_RE.search(content):
         return _MONEY_REPLACEMENT
     content = _MVN_EMAIL_RE.sub(_OFFICIAL_EMAIL, content)
