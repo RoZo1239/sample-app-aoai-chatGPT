@@ -32,14 +32,16 @@ export function parseAnswer(answer: AskResponse): ParsedAnswer {
   let filteredCitations = [] as Citation[]
   let citationReindex = 0
   citationLinks?.forEach(link => {
-    // Replacing the links/citations with number
     const citationIndex = link.slice(lengthDocN, link.length - 1)
     const citation = cloneDeep(answer.citations[Number(citationIndex) - 1]) as Citation
     if (!filteredCitations.find(c => c.id === citationIndex) && citation) {
       answerText = answerText.replaceAll(link, ` ^${++citationReindex}^ `)
-      citation.id = citationIndex // original doc index to de-dupe
-      citation.reindex_id = citationReindex.toString() // reindex from 1 for display
+      citation.id = citationIndex
+      citation.reindex_id = citationReindex.toString()
       filteredCitations.push(citation)
+    } else if (!citation) {
+      // Citation index has no matching entry — strip the raw marker from the text
+      answerText = answerText.replaceAll(link, '')
     }
   })
 

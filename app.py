@@ -405,6 +405,18 @@ Instead, handle it naturally:
 """,
 )
 
+# Resolve placeholder variables in SYSTEM_PROMPT whether it came from the
+# env var (plain string) or the f-string default. The env var path skips
+# Python f-string interpolation, so these would otherwise reach the LLM
+# as literal text and be echoed back in responses.
+SYSTEM_PROMPT = (
+    SYSTEM_PROMPT
+    .replace("{MVN_SUPPORT_EMAIL}", MVN_SUPPORT_EMAIL)
+    .replace("{MVN_WEBSITE_URL}", MVN_WEBSITE_URL)
+    .replace("{MVN_CONTACT_URL}", MVN_CONTACT_URL)
+    .replace("{MVN_TUITION_CALCULATOR_URL}", MVN_TUITION_CALCULATOR_URL)
+)
+
 if app_settings.datasource and hasattr(app_settings, 'search'):
     app_settings.search.role_information = SYSTEM_PROMPT
 
