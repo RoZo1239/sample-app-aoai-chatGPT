@@ -239,6 +239,25 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked }: Prop
           {codeString}
         </SyntaxHighlighter>
       )
+    },
+    sup({ children }: { children: React.ReactNode }) {
+      const index = parseInt(String(children), 10) - 1
+      const citation = parsedAnswer?.citations[index]
+      if (citation) {
+        return (
+          <span
+            className={styles.clickableSup}
+            onClick={() => onCitationClicked(citation)}
+            title={citation.title || `Source ${index + 1}`}
+            role="button"
+            tabIndex={0}
+            onKeyDown={e => e.key === 'Enter' && onCitationClicked(citation)}
+          >
+            {children}
+          </span>
+        )
+      }
+      return <sup>{children}</sup>
     }
   }
   return (
@@ -324,10 +343,9 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked }: Prop
             </Stack.Item>
           )}
           <Stack.Item className={styles.answerDisclaimerContainer}>
-            <span className={styles.answerDisclaimer}>AI-generated content may be incorrect</span>
             {typeof answer.trust_score === 'number' && (
               <span className={styles.answerDisclaimer}>
-                {' '}• Trust: {(answer.trust_score * 100).toFixed(0)}% ({answer.trust_label ?? 'unknown'})
+                Trust: {(answer.trust_score * 100).toFixed(0)}% ({answer.trust_label ?? 'unknown'})
                 {answer.cache_hit ? ' • cached similar answer' : ''}
               </span>
             )}
