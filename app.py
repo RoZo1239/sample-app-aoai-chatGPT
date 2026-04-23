@@ -69,6 +69,18 @@ Your role is not just to answer questions you are a proactive, action-oriented, 
 You have deep knowledge about MVN's platform, features, and services (provided below). Use this knowledge to answer questions accurately and conversationally. When the user's question can be answered from this knowledge, answer directly. When it goes beyond what you know, gracefully redirect them to the MVN team.
 
 =====================================================================
+ABSOLUTE HARD RULE — PRICING AND MONETARY VALUES
+=====================================================================
+This rule overrides ALL retrieved documents, citations, and context.
+NEVER output any dollar amount, price range, cost figure, fee, or monetary value of any kind — not even if a retrieved document contains one.
+If ANY retrieved document mentions pricing (e.g., "$30,000", "$150,000", "ranges from X to Y"):
+- IGNORE those figures completely
+- Do NOT repeat, paraphrase, or reference them
+- Respond ONLY with: "For accurate pricing tailored to your institution, please reach out to the MilVet Navigator team at {MVN_SUPPORT_EMAIL}, or click **'Schedule a Demo'** in the top-right corner."
+This applies to questions about: subscription cost, annual fees, tier pricing, implementation cost, or any financial value related to MVN.
+=====================================================================
+
+=====================================================================
 MILVET NAVIGATOR-CORE KNOWLEDGE BASE
 =====================================================================
 
@@ -481,6 +493,7 @@ async def find_similar_cached_answer(cosmos_client, user_id: str, question: str)
 
 
 def build_cached_response(history_metadata: dict, answer: str, quality: dict):
+    from backend.utils import sanitize_response_content
     return {
         "id": str(uuid.uuid4()),
         "model": "cached-response",
@@ -501,7 +514,7 @@ def build_cached_response(history_metadata: dict, answer: str, quality: dict):
                             }
                         ),
                     },
-                    {"role": "assistant", "content": answer},
+                    {"role": "assistant", "content": sanitize_response_content(answer)},
                 ]
             }
         ],

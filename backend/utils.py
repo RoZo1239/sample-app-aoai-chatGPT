@@ -39,6 +39,21 @@ _MONEY_REPLACEMENT = (
     + _OFFICIAL_EMAIL
 )
 
+_PRICING_CONTEXT_RE = re.compile(
+    r"""(
+        (?:annual|monthly|subscription)\s+(?:cost|price|fee|pricing)\s+(?:ranges?|starts?|is|are)\s+from
+        |
+        (?:pricing|cost)\s+(?:ranges?|model|structure|tier|plan)
+        |
+        (?:ranges?\s+from\s+(?:US\$|\$)|\bstarts?\s+at\s+(?:US\$|\$))
+        |
+        (?:institutional\s+subscription\s+cost)
+        |
+        (?:depending\s+on\s+(?:factors?\s+such\s+as|the\s+size))
+    )""",
+    re.IGNORECASE | re.VERBOSE,
+)
+
 _RETRIEVAL_DEAD_END_RE = re.compile(
      r"""(
         the\s+requested\s+information\s+is\s+not\s+(?:available|found)\s+in\s+the\s+retrieved\s+data\.?\s*please\s+try\s+another\s+query\s+or\s+topic\.?
@@ -59,7 +74,7 @@ def sanitize_response_content(content):
     if not content:
         return content
     content = _EMAIL_PLACEHOLDER_RE.sub(_OFFICIAL_EMAIL, content)
-    if _MONEY_RE.search(content):
+    if _MONEY_RE.search(content) or _PRICING_CONTEXT_RE.search(content):
         return _MONEY_REPLACEMENT
     content = _MVN_EMAIL_RE.sub(_OFFICIAL_EMAIL, content)
     content = _PHONE_RE.sub(_OFFICIAL_EMAIL, content)
