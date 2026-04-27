@@ -184,6 +184,26 @@ sup {
   line-height: 10px;
 }
 
+.ctaButton {
+  display: inline-block;
+  background-color: #0f6cbd;
+  color: #ffffff !important;
+  border-radius: 6px;
+  padding: 4px 14px;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.5;
+  text-decoration: none !important;
+  margin: 2px 3px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.ctaButton:hover {
+  background-color: #115ea3;
+  text-decoration: none !important;
+}
+
 @media (max-width: 480px) {
   .answerFooter {
     flex-direction: column-reverse;
