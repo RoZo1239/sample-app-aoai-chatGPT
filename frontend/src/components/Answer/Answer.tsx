@@ -240,6 +240,34 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked }: Prop
         </SyntaxHighlighter>
       )
     },
+    strong({ children }: { children: React.ReactNode }) {
+      const text = String(children).replace(/['']/g, '')
+      if (/schedule\s+a\s+demo/i.test(text)) {
+        return (
+          <a
+            href="https://milvetnavigator.com/schedule-demo"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.ctaButton}
+          >
+            {children}
+          </a>
+        )
+      }
+      if (/schedule\s+a\s+meeting/i.test(text)) {
+        return (
+          <a
+            href="https://milvetnavigator.com/contact"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.ctaButton}
+          >
+            {children}
+          </a>
+        )
+      }
+      return <strong>{children}</strong>
+    },
     sup({ children }: { children: React.ReactNode }) {
       const index = parseInt(String(children), 10) - 1
       const citation = parsedAnswer?.citations[index]
