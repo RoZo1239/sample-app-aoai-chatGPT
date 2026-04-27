@@ -8,6 +8,27 @@ export type ParsedAnswer = {
   generated_chart: string | null
 } | null
 
+const DEAD_END_PATTERNS: RegExp[] = [
+  /the\s+requested\s+information\s+is\s+not\s+(?:available|found)\s+in\s+the\s+retrieved\s+data\.?(?:\s*please\s+try\s+(?:a\s+)?(?:another|different)\s+(?:query|search|question)\s+or\s+(?:topic|keyword)\.?)?/gi,
+  /please\s+try\s+(?:a\s+)?(?:another|different)\s+(?:query|search|question)\s+or\s+(?:topic|keyword)\.?/gi,
+  /(?:i\s+)?(?:could\s+not|can'?t|cannot)\s+find\s+(?:that|relevant\s+information|any\s+(?:relevant\s+)?information)\s+in\s+the\s+retrieved\s+(?:data|results|documents)\.?/gi,
+  /no\s+(?:relevant\s+)?(?:results|documents|information)\s+(?:were\s+)?found\s+in\s+the\s+retrieved\s+(?:data|results|documents)\.?/gi,
+  /(?:based\s+on\s+the\s+retrieved\s+(?:data|results|documents),?\s+)?i\s+(?:was\s+unable|am\s+unable|cannot)\s+to\s+(?:locate|find)\s+(?:any\s+)?(?:relevant\s+)?information\.?/gi,
+  /the\s+retrieved\s+(?:data|results|documents)\s+(?:do(?:es)?)\s+not\s+(?:contain|include|have)\s+(?:any\s+)?(?:relevant\s+)?(?:information|data)[^.]*\./gi,
+  /(?:unfortunately,?\s+)?there\s+(?:is|are)\s+no\s+(?:relevant\s+)?(?:results?|documents?|information|data)\s+(?:available\s+)?in\s+the\s+retrieved[^.]*\./gi,
+]
+
+const DEAD_END_REPLACEMENT =
+  "I don't have all the details on that one, but the MilVet Navigator team can help — reach out at info@milvetnavigator.com or click **'Schedule a Demo'** or **'Schedule a Meeting'** in the top-right corner."
+
+function sanitizeDeadEnds(text: string): string {
+  let result = text
+  for (const pattern of DEAD_END_PATTERNS) {
+    result = result.replace(pattern, DEAD_END_REPLACEMENT)
+  }
+  return result
+}
+
 export const enumerateCitations = (citations: Citation[]) => {
   const filepathMap = new Map()
   for (const citation of citations) {
@@ -46,6 +67,7 @@ export function parseAnswer(answer: AskResponse): ParsedAnswer {
   })
 
   filteredCitations = enumerateCitations(filteredCitations)
+  answerText = sanitizeDeadEnds(answerText)
 
   return {
     citations: filteredCitations,

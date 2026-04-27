@@ -55,12 +55,24 @@ _PRICING_CONTEXT_RE = re.compile(
 )
 
 _RETRIEVAL_DEAD_END_RE = re.compile(
-     r"""(
-        the\s+requested\s+information\s+is\s+not\s+(?:available|found)\s+in\s+the\s+retrieved\s+data\.?\s*please\s+try\s+another\s+query\s+or\s+topic\.?
+    r"""(
+        (?:the\s+)?requested\s+information\s+is\s+not\s+(?:available|found)\s+in\s+the\s+retrieved\s+data
         |
-        (?:i\s+)?(?:could\s+not|can't|cannot)\s+find\s+(?:that|relevant\s+information)\s+in\s+the\s+retrieved\s+(?:data|results)\.?
+        not\s+(?:available|found)\s+in\s+the\s+retrieved\s+(?:data|results|documents)
         |
-        no\s+(?:relevant\s+)?(?:results|documents)\s+(?:were\s+)?found\s+in\s+the\s+retrieved\s+(?:data|results)\.?
+        please\s+try\s+(?:a\s+)?(?:another|different)\s+(?:query|search|question)\s+or\s+(?:topic|keyword)
+        |
+        (?:i\s+)?(?:could\s+not|can'?t|cannot)\s+find\s+(?:that|relevant\s+information|any\s+(?:relevant\s+)?information)\s+in\s+the\s+retrieved\s+(?:data|results|documents)
+        |
+        no\s+(?:relevant\s+)?(?:results|documents|information)\s+(?:were\s+)?found\s+in\s+the\s+retrieved\s+(?:data|results|documents)
+        |
+        (?:based\s+on\s+the\s+retrieved\s+(?:data|results|documents),?\s+)?i\s+(?:was\s+unable|am\s+unable|cannot)\s+to\s+(?:locate|find)\s+(?:any\s+)?(?:relevant\s+)?information
+        |
+        the\s+retrieved\s+(?:data|results|documents)\s+(?:do(?:es)?)\s+not\s+(?:contain|include|have)\s+(?:any\s+)?(?:relevant\s+)?(?:information|data)
+        |
+        (?:unfortunately,?\s+)?there\s+(?:is|are)\s+no\s+(?:relevant\s+)?(?:results?|documents?|information|data)\s+(?:available\s+)?in\s+the\s+retrieved
+        |
+        i\s+(?:was\s+)?unable\s+to\s+find\s+(?:any\s+)?(?:relevant\s+)?information\s+(?:about|on|for|regarding)\s+(?:this|that)\s+(?:topic|query|question)
     )""",
     re.IGNORECASE | re.VERBOSE,
 )
