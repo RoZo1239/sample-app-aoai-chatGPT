@@ -824,7 +824,7 @@ const Chat = () => {
                 <h1 className={styles.chatEmptyStateTitle}>{ui?.chat_title}</h1>
                 <h2 className={styles.chatEmptyStateSubtitle}>{ui?.chat_description}</h2>
                 <div className={styles.suggestedQuestionsSection}>
-                  <span className={styles.suggestedQuestionsLabel}>Suggested questions</span>
+                  <span className={styles.suggestedQuestionsLabel}>Frequently Asked Questions</span>
                   {SUGGESTED_QUESTIONS.map((q, i) => (
                     <button
                       key={i}
