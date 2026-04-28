@@ -68,6 +68,11 @@ export function parseAnswer(answer: AskResponse): ParsedAnswer {
 
   filteredCitations = enumerateCitations(filteredCitations)
   answerText = sanitizeDeadEnds(answerText)
+  // Convert bare MVN email addresses to markdown links so they render as buttons
+  answerText = answerText.replace(
+    /\binfo@milvetnavigator\.com\b/gi,
+    '[info@milvetnavigator.com](https://milvetnavigator.com/contact/)'
+  )
 
   return {
     citations: filteredCitations,
