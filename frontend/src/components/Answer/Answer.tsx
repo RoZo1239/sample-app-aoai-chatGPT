@@ -21,9 +21,10 @@ interface Props {
   onCitationClicked: (citedDocument: Citation) => void
   onExectResultClicked: (answerId: string) => void
   onExpandClicked?: () => void
+  forceSummaryMode?: boolean
 }
 
-export const Answer = ({ answer, onCitationClicked, onExectResultClicked, onExpandClicked }: Props) => {
+export const Answer = ({ answer, onCitationClicked, onExectResultClicked, onExpandClicked, forceSummaryMode = false }: Props) => {
   const initializeAnswerFeedback = (answer: AskResponse) => {
     if (answer.message_id == undefined) return undefined
     if (answer.feedback == undefined) return undefined
@@ -37,6 +38,40 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked, onExpa
   const filePathTruncationLimit = 50
 
   const parsedAnswer = useMemo(() => parseAnswer(answer), [answer])
+  const renderedMarkdownText = useMemo(() => {
+    const markdownText = parsedAnswer?.markdownFormatText ?? ''
+    if (!forceSummaryMode || !markdownText) {
+      return markdownText
+    }
+
+    if (/expand\s+for\s+more\s+details/i.test(markdownText)) {
+      return markdownText
+    }
+
+    const nonEmptyLines = markdownText
+      .split('\n')
+      .map(line => line.trim())
+      .filter(Boolean)
+
+    const bulletLines = nonEmptyLines.filter(line => /^([-*]|\d+\.)\s+/.test(line))
+    let summaryBody = ''
+
+    if (bulletLines.length > 0) {
+      const leadingLine = nonEmptyLines.find(line => !/^([-*]|\d+\.)\s+/.test(line))
+      const selectedBullets = bulletLines.slice(0, 3)
+      summaryBody = leadingLine ? [leadingLine, ...selectedBullets].join('\n') : selectedBullets.join('\n')
+    } else {
+      const normalizedText = markdownText.replace(/\s+/g, ' ').trim()
+      const sentences = normalizedText.split(/(?<=[.!?])\s+/).filter(Boolean)
+      summaryBody = sentences.slice(0, 2).join(' ')
+    }
+
+    if (!summaryBody) {
+      return markdownText
+    }
+
+    return `${summaryBody}\n\n**[Expand for more details]**`
+  }, [forceSummaryMode, parsedAnswer?.markdownFormatText])
   const [chevronIsExpanded, setChevronIsExpanded] = useState(isRefAccordionOpen)
   const [feedbackState, setFeedbackState] = useState(initializeAnswerFeedback(answer))
   const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false)
