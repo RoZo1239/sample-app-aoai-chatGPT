@@ -4,7 +4,9 @@ import { AskResponse, Citation } from '../../api'
 
 export type ParsedAnswer = {
   citations: Citation[]
-  markdownFormatText: string,
+  markdownFormatText: string
+  summaryText: string | null
+  detailsText: string | null
   generated_chart: string | null
 } | null
 
@@ -76,9 +78,22 @@ export function parseAnswer(answer: AskResponse): ParsedAnswer {
     '[info@milvetnavigator.com](https://milvetnavigator.com/contact/)'
   )
 
+  // Split on [EXPAND_START] marker into summary and details
+  const EXPAND_MARKER = '[EXPAND_START]'
+  const boundaryIdx = answerText.indexOf(EXPAND_MARKER)
+  let summaryText: string | null = null
+  let detailsText: string | null = null
+  if (boundaryIdx !== -1) {
+    summaryText = answerText.slice(0, boundaryIdx).trim()
+    detailsText = answerText.slice(boundaryIdx + EXPAND_MARKER.length).trim()
+    answerText = summaryText + '\n\n' + detailsText
+  }
+
   return {
     citations: filteredCitations,
     markdownFormatText: answerText,
+    summaryText,
+    detailsText,
     generated_chart: answer.generated_chart
   }
 }

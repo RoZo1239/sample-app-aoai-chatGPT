@@ -88,6 +88,38 @@ _DEAD_END_DEDUP_RE = re.compile(
 # Em dash pattern for prose sanitization
 _EM_DASH_RE = re.compile(r'\s*—\s*')
 
+# Detects if response already opens with an approved conversational filler
+_FILLER_OPENING_RE = re.compile(
+    r"""^\s*(?:
+        here'?s\s+the\s+key\s+idea
+        |good\s+question
+        |let'?s\s+break\s+this\s+down
+        |in\s+simple\s+terms
+        |from\s+what\s+i\s+can\s+see
+        |this\s+is\s+what'?s\s+happening
+        |it\s+looks\s+like
+        |great\s+question
+        |sure[,!]
+    )""",
+    re.IGNORECASE | re.VERBOSE,
+)
+_FILLER_ROTATION = [
+    "Here's the key idea: ",
+    "From what I can see, ",
+    "Let's break this down: ",
+    "In simple terms, ",
+]
+_filler_counter = 0
+
+def enforce_opening_filler(content: str) -> str:
+    """Prepend a conversational filler if the response does not already open with one."""
+    global _filler_counter
+    if not content or _FILLER_OPENING_RE.match(content):
+        return content
+    filler = _FILLER_ROTATION[_filler_counter % len(_FILLER_ROTATION)]
+    _filler_counter += 1
+    return filler + content
+
 def sanitize_response_content(content):
     if not content:
         return content
@@ -188,14 +220,14 @@ def format_non_streaming_response(chatCompletion, history_metadata, apim_request
             response_obj["choices"][0]["messages"].append(
                 {
                     "role": "assistant",
-                    "content": sanitize_response_content(message.content),
+                    "content": enforce_opening_filler(sanitize_response_content(message.content)),
                 }
             )
             return response_obj
 
     return {}
 
-def format_stream_response(chatCompletionChunk, history_metadata, apim_request_id):
+def format_stream_response(chatCompletionChunk, history_metadata, apim_request_id, is_first_content=False):
     response_obj = {
         "id": chatCompletionChunk.id,
         "model": chatCompletionChunk.model,
@@ -238,10 +270,10 @@ def format_stream_response(chatCompletionChunk, history_metadata, apim_request_i
                 return response_obj
             else:
                 if delta.content:
-                    messageObj = {
-                        "role": "assistant",
-                        "content": sanitize_response_content(delta.content),
-                    }
+                    content = sanitize_response_content(delta.content)
+                    if is_first_content:
+                        content = enforce_opening_filler(content)
+                    messageObj = {"role": "assistant", "content": content}
                     response_obj["choices"][0]["messages"].append(messageObj)
                     return response_obj
 
