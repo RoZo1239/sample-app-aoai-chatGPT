@@ -33,6 +33,7 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked, onExpa
   }
 
   const [isRefAccordionOpen, { toggle: toggleIsRefAccordionOpen }] = useBoolean(false)
+  const [isExpanded, setIsExpanded] = useState(false)
   const filePathTruncationLimit = 50
 
   const parsedAnswer = useMemo(() => parseAnswer(answer), [answer])
@@ -247,7 +248,7 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked, onExpa
         return (
           <button
             className={styles.expandButton}
-            onClick={() => onExpandClicked?.()}
+            onClick={() => setIsExpanded(true)}
             type="button"
           >
             {children}
@@ -340,17 +341,34 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked, onExpa
         <Stack.Item>
           <Stack horizontal grow>
             <Stack.Item grow>
-              {parsedAnswer && <ReactMarkdown
-                linkTarget="_blank"
-                remarkPlugins={[remarkGfm, supersub]}
-                children={
-                  SANITIZE_ANSWER
-                    ? DOMPurify.sanitize(parsedAnswer?.markdownFormatText, { ALLOWED_TAGS: XSSAllowTags, ALLOWED_ATTR: XSSAllowAttributes })
-                    : parsedAnswer?.markdownFormatText
-                }
-                className={styles.answerText}
-                components={components}
-              />}
+              {parsedAnswer && (() => {
+                const displayText = !isExpanded && parsedAnswer.summaryText
+                  ? parsedAnswer.summaryText
+                  : parsedAnswer.markdownFormatText
+                const sanitized = SANITIZE_ANSWER
+                  ? DOMPurify.sanitize(displayText, { ALLOWED_TAGS: XSSAllowTags, ALLOWED_ATTR: XSSAllowAttributes })
+                  : displayText
+                return (
+                  <>
+                    <ReactMarkdown
+                      linkTarget="_blank"
+                      remarkPlugins={[remarkGfm, supersub]}
+                      children={sanitized}
+                      className={styles.answerText}
+                      components={components}
+                    />
+                    {parsedAnswer.detailsText && !isExpanded && (
+                      <button
+                        className={styles.expandButton}
+                        onClick={() => setIsExpanded(true)}
+                        type="button"
+                      >
+                        Expand for more details
+                      </button>
+                    )}
+                  </>
+                )
+              })()}
             </Stack.Item>
             <Stack.Item className={styles.answerHeader}>
               {FEEDBACK_ENABLED && answer.message_id !== undefined && (
