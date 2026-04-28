@@ -241,11 +241,11 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked }: Prop
       )
     },
     strong({ children }: { children: React.ReactNode }) {
-      const text = String(children).replace(/['']/g, '')
+      const text = String(children).replace(/[''""]/g, '')
       if (/schedule\s+a\s+demo/i.test(text)) {
         return (
           <a
-            href="https://milvetnavigator.com/schedule-demo"
+            href="https://forms.office.com/Pages/ResponsePage.aspx?id=_TGI1G2FQk2gJgRPpEDtCxalQxmp6zNBsybDQDb60yBUMVNCVDhIUFJYMDJQUTUzM1YxSzdZMTA1TSQlQCN0PWcu"
             target="_blank"
             rel="noopener noreferrer"
             className={styles.ctaButton}
@@ -257,7 +257,19 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked }: Prop
       if (/schedule\s+a\s+meeting/i.test(text)) {
         return (
           <a
-            href="https://milvetnavigator.com/contact"
+            href="https://outlook.office.com/bookwithme/user/4b7fbc393660415583a4a4eac09e3bfc%40milvetnavigator.com/booking/HOgA9kJb-0SXfHHK6rOZGw2?anonymous&ismsaljsauthenabled=true"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.ctaButton}
+          >
+            {children}
+          </a>
+        )
+      }
+      if (/contact\s+us|get\s+in\s+touch|contact\s+form/i.test(text)) {
+        return (
+          <a
+            href="https://milvetnavigator.com/contact/"
             target="_blank"
             rel="noopener noreferrer"
             className={styles.ctaButton}
