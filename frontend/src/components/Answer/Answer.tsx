@@ -282,10 +282,10 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked }: Prop
     },
     a({ href, children }: { href?: string; children: React.ReactNode }) {
       const isCTA = href && (
-        /milvetnavigator\.com\/contact/i.test(href) ||
-        /mailto:.*milvetnavigator/i.test(href) ||
+        /outlook\.office\.com.*bookwithme/i.test(href) ||
         /forms\.office\.com/i.test(href) ||
-        /outlook\.office\.com.*bookwithme/i.test(href)
+        /milvetnavigator\.com\/contact/i.test(href) ||
+        /mailto:.*milvetnavigator/i.test(href)
       )
       if (isCTA) {
         return (
