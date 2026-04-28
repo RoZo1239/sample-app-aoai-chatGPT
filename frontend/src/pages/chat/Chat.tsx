@@ -72,8 +72,9 @@ const Chat = () => {
   const [logo, setLogo] = useState('')
   const [answerId, setAnswerId] = useState<string>('')
 
-  const triggerCTAHighlight = (content: string) => {
-    if (/schedule\s+a\s+(demo|meeting)/i.test(content)) {
+  const triggerCTAHighlight = (content: string | any[]) => {
+    const text = typeof content === 'string' ? content : ''
+    if (/schedule\s+a\s+(demo|meeting)/i.test(text)) {
       appStateContext?.dispatch({ type: 'SET_HIGHLIGHT_CTA', payload: true })
     }
   }
