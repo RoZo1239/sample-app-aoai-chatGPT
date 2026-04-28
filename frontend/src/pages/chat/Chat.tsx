@@ -873,6 +873,7 @@ const Chat = () => {
                           }}
                           onCitationClicked={c => onShowCitation(c)}
                           onExectResultClicked={() => onShowExecResult(answerId)}
+                          onExpandClicked={() => handleSuggestedQuestion('expand')}
                         />}
                       </div>
                     ) : answer.role === ERROR ? (
