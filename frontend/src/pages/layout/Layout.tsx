@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 import { DefaultButton, Dialog, Stack, TextField } from '@fluentui/react'
 import { CopyRegular } from '@fluentui/react-icons'
@@ -20,6 +20,8 @@ const Layout = () => {
   const [logo, setLogo] = useState('')
   const appStateContext = useContext(AppStateContext)
   const ui = appStateContext?.state.frontendSettings?.ui
+  const highlightCTA = appStateContext?.state.highlightCTA ?? false
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const scheduleMeetingUrl =
     'https://outlook.office.com/bookwithme/user/4b7fbc393660415583a4a4eac09e3bfc%40milvetnavigator.com/booking/HOgA9kJb-0SXfHHK6rOZGw2?anonymous&ismsaljsauthenabled=true'
   const scheduleDemoUrl =
@@ -59,6 +61,18 @@ const Layout = () => {
   useEffect(() => { }, [appStateContext?.state.isCosmosDBAvailable.status])
 
   useEffect(() => {
+    if (highlightCTA) {
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
+      highlightTimerRef.current = setTimeout(() => {
+        appStateContext?.dispatch({ type: 'SET_HIGHLIGHT_CTA', payload: false })
+      }, 5000)
+    }
+    return () => {
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
+    }
+  }, [highlightCTA])
+
+  useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 480) {
         setShareLabel(undefined)
@@ -89,14 +103,14 @@ const Layout = () => {
           </Stack>
           <Stack horizontal tokens={{ childrenGap: 8 }} className={styles.shareButtonContainer}>
             <DefaultButton
-              className={styles.topActionButton}
+              className={highlightCTA ? styles.topActionButtonHighlight : styles.topActionButton}
               text="Schedule a meeting"
               href={scheduleMeetingUrl}
               target="_blank"
               rel="noreferrer"
             />
             <DefaultButton
-              className={styles.topActionButton}
+              className={highlightCTA ? styles.topActionButtonHighlight : styles.topActionButton}
               text="Schedule a demo"
               href={scheduleDemoUrl}
               target="_blank"

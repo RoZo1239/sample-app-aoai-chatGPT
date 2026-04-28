@@ -82,6 +82,8 @@ export const appStateReducer = (state: AppState, action: Action): AppState => {
           [action.payload.answerId]: action.payload.exec_result
         }
       }
+    case 'SET_HIGHLIGHT_CTA':
+      return { ...state, highlightCTA: action.payload }
     default:
       return state
   }

@@ -72,6 +72,12 @@ const Chat = () => {
   const [logo, setLogo] = useState('')
   const [answerId, setAnswerId] = useState<string>('')
 
+  const triggerCTAHighlight = (content: string) => {
+    if (/schedule\s+a\s+(demo|meeting)/i.test(content)) {
+      appStateContext?.dispatch({ type: 'SET_HIGHLIGHT_CTA', payload: true })
+    }
+  }
+
   const handleSuggestedQuestion = (question: string) => {
     appStateContext?.state.isCosmosDBAvailable?.cosmosDB
       ? makeApiRequestWithCosmosDB(question)
@@ -282,6 +288,7 @@ const Chat = () => {
         }
         conversation.messages.push(toolMessage, assistantMessage)
         appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: conversation })
+        triggerCTAHighlight(assistantMessage.content)
         setMessages([...messages, toolMessage, assistantMessage])
       }
     } catch (e) {
@@ -471,6 +478,7 @@ const Chat = () => {
           return
         }
         appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: resultConversation })
+        triggerCTAHighlight(assistantMessage.content)
         isEmpty(toolMessage)
           ? setMessages([...messages, assistantMessage])
           : setMessages([...messages, toolMessage, assistantMessage])
