@@ -227,7 +227,7 @@ def format_non_streaming_response(chatCompletion, history_metadata, apim_request
 
     return {}
 
-def format_stream_response(chatCompletionChunk, history_metadata, apim_request_id, is_first_content=False):
+def format_stream_response(chatCompletionChunk, history_metadata, apim_request_id):
     response_obj = {
         "id": chatCompletionChunk.id,
         "model": chatCompletionChunk.model,
@@ -270,10 +270,7 @@ def format_stream_response(chatCompletionChunk, history_metadata, apim_request_i
                 return response_obj
             else:
                 if delta.content:
-                    content = sanitize_response_content(delta.content)
-                    if is_first_content:
-                        content = enforce_opening_filler(content)
-                    messageObj = {"role": "assistant", "content": content}
+                    messageObj = {"role": "assistant", "content": sanitize_response_content(delta.content)}
                     response_obj["choices"][0]["messages"].append(messageObj)
                     return response_obj
 
