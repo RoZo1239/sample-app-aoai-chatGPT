@@ -31,6 +31,22 @@ function sanitizeDeadEnds(text: string): string {
   return result
 }
 
+// Filler enforcement — guaranteed opening regardless of model output
+const FILLER_OPENING_RE = /^(?:here'?s\s+the\s+key|good\s+question|let'?s\s+break|in\s+simple\s+terms|from\s+what\s+i\s+can\s+see|this\s+is\s+what'?s\s+happening|it\s+looks\s+like)/i
+const FILLER_POOL = [
+  "Here's the key idea: ",
+  "From what I can see, ",
+  "Let's break this down: ",
+  "In simple terms, ",
+]
+let _fillerIdx = 0
+function enforceOpeningFiller(text: string): string {
+  if (FILLER_OPENING_RE.test(text.trimStart())) return text
+  const filler = FILLER_POOL[_fillerIdx % FILLER_POOL.length]
+  _fillerIdx++
+  return filler + text
+}
+
 export const enumerateCitations = (citations: Citation[]) => {
   const filepathMap = new Map()
   for (const citation of citations) {
@@ -63,30 +79,38 @@ export function parseAnswer(answer: AskResponse): ParsedAnswer {
       citation.reindex_id = citationReindex.toString()
       filteredCitations.push(citation)
     } else if (!citation) {
-      // Citation index has no matching entry — strip the raw marker from the text
       answerText = answerText.replaceAll(link, '')
     }
   })
 
   filteredCitations = enumerateCitations(filteredCitations)
   answerText = sanitizeDeadEnds(answerText)
-  // Strip em dashes from prose (replace with a space)
   answerText = answerText.replace(/\s*—\s*/g, ' ')
-  // Convert bare MVN email addresses to clickable contact page links
   answerText = answerText.replace(
     /\binfo@milvetnavigator\.com\b/gi,
     '[info@milvetnavigator.com](https://milvetnavigator.com/contact/)'
   )
 
-  // Split on [EXPAND_START] marker into summary and details
+  // Enforce conversational opening filler
+  answerText = enforceOpeningFiller(answerText)
+
+  // Split on [EXPAND_START] marker if the model included it
   const EXPAND_MARKER = '[EXPAND_START]'
   const boundaryIdx = answerText.indexOf(EXPAND_MARKER)
   let summaryText: string | null = null
   let detailsText: string | null = null
+
   if (boundaryIdx !== -1) {
     summaryText = answerText.slice(0, boundaryIdx).trim()
     detailsText = answerText.slice(boundaryIdx + EXPAND_MARKER.length).trim()
     answerText = summaryText + '\n\n' + detailsText
+  } else if (answerText.length > 200) {
+    // Auto-split fallback: find the first paragraph break after 150 chars
+    const splitIdx = answerText.indexOf('\n\n', 150)
+    if (splitIdx !== -1 && splitIdx < answerText.length - 80) {
+      summaryText = answerText.slice(0, splitIdx).trim()
+      detailsText = answerText.slice(splitIdx).trim()
+    }
   }
 
   return {
@@ -97,3 +121,4 @@ export function parseAnswer(answer: AskResponse): ParsedAnswer {
     generated_chart: answer.generated_chart
   }
 }
+
