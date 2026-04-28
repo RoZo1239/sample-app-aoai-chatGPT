@@ -1,4 +1,4 @@
-import { FormEvent, useContext, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { nord } from 'react-syntax-highlighter/dist/esm/styles/prism'
@@ -15,6 +15,11 @@ import { AppStateContext } from '../../state/AppProvider'
 import { parseAnswer } from './AnswerParser'
 
 import styles from './Answer.module.css'
+
+// Filler enforcement — applied once per Answer instance via useRef
+const _FILLER_DETECT_RE = /^(?:here.?s\s+the\s+key|good\s+question|let.?s\s+break|in\s+simple\s+terms|from\s+what\s+i\s+can\s+see|this\s+is\s+what.?s\s+happening|it\s+looks\s+like)/i
+const _FILLER_POOL = ["Here's the key idea: ", "From what I can see, ", "Let's break this down: ", "In simple terms, "]
+let _globalFillerIdx = 0
 
 interface Props {
   answer: AskResponse
@@ -35,6 +40,7 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked, onExpa
 
   const [isRefAccordionOpen, { toggle: toggleIsRefAccordionOpen }] = useBoolean(false)
   const [isExpanded, setIsExpanded] = useState(false)
+  const fillerRef = useRef<string>('')
   const filePathTruncationLimit = 50
 
   const parsedAnswer = useMemo(() => parseAnswer(answer), [answer])
@@ -377,9 +383,23 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked, onExpa
           <Stack horizontal grow>
             <Stack.Item grow>
               {parsedAnswer && (() => {
-                const displayText = !isExpanded && parsedAnswer.summaryText
+                const baseText = !isExpanded && parsedAnswer.summaryText
                   ? parsedAnswer.summaryText
                   : parsedAnswer.markdownFormatText
+
+                // Assign filler exactly once when there is enough text
+                if (!fillerRef.current && baseText.length >= 60) {
+                  const normalized = baseText.trimStart().replace(/[‘’ʼ]/g, "'")
+                  if (_FILLER_DETECT_RE.test(normalized)) {
+                    fillerRef.current = '​' // model already has filler — mark as checked
+                  } else {
+                    fillerRef.current = _FILLER_POOL[_globalFillerIdx % _FILLER_POOL.length]
+                    _globalFillerIdx++
+                  }
+                }
+
+                const prefix = fillerRef.current && fillerRef.current !== '​' ? fillerRef.current : ''
+                const displayText = prefix + baseText
                 const sanitized = SANITIZE_ANSWER
                   ? DOMPurify.sanitize(displayText, { ALLOWED_TAGS: XSSAllowTags, ALLOWED_ATTR: XSSAllowAttributes })
                   : displayText

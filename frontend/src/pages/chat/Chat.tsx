@@ -899,21 +899,6 @@ const Chat = () => {
                     ) : null}
                   </>
                 ))}
-                {showLoadingMessage && (
-                  <>
-                    <div className={styles.chatMessageGpt}>
-                      <Answer
-                        answer={{
-                          answer: "Generating answer...",
-                          citations: [],
-                          generated_chart: null
-                        }}
-                        onCitationClicked={() => null}
-                        onExectResultClicked={() => null}
-                      />
-                    </div>
-                  </>
-                )}
                 <div ref={chatMessageStreamEnd} />
               </div>
             )}
