@@ -280,6 +280,27 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked }: Prop
       }
       return <strong>{children}</strong>
     },
+    a({ href, children }: { href?: string; children: React.ReactNode }) {
+      const isCTA = href && (
+        /milvetnavigator\.com\/contact/i.test(href) ||
+        /mailto:.*milvetnavigator/i.test(href) ||
+        /forms\.office\.com/i.test(href) ||
+        /outlook\.office\.com.*bookwithme/i.test(href)
+      )
+      if (isCTA) {
+        return (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.ctaButton}
+          >
+            {children}
+          </a>
+        )
+      }
+      return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>
+    },
     sup({ children }: { children: React.ReactNode }) {
       const index = parseInt(String(children), 10) - 1
       const citation = parsedAnswer?.citations[index]
