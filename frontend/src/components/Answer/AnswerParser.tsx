@@ -41,6 +41,8 @@ const FILLER_POOL = [
 ]
 let _fillerIdx = 0
 function enforceOpeningFiller(text: string): string {
+  // Skip for loading placeholder and fragments too short to evaluate
+  if (text.length < 60) return text
   if (FILLER_OPENING_RE.test(text.trimStart())) return text
   const filler = FILLER_POOL[_fillerIdx % FILLER_POOL.length]
   _fillerIdx++

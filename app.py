@@ -1443,30 +1443,12 @@ async def stream_chat_request(request_body, request_headers):
                 if stream_state == "COMPLETED":
                     request_body["messages"].extend(function_call_stream_state.function_messages)
                     function_response, apim_request_id = await send_chat_request(request_body, request_headers)
-                    _fc_first_content = True
                     async for functionCompletionChunk in function_response:
-                        fc_formatted = format_stream_response(
-                            functionCompletionChunk, history_metadata, apim_request_id,
-                            is_first_content=_fc_first_content
-                        )
-                        if _fc_first_content:
-                            fc_msgs = fc_formatted.get("choices", [{}])[0].get("messages", [])
-                            if any(m.get("role") == "assistant" and m.get("content") for m in fc_msgs):
-                                _fc_first_content = False
-                        yield fc_formatted
+                        yield format_stream_response(functionCompletionChunk, history_metadata, apim_request_id)
                 
         else:
-            _first_content = True
             async for completionChunk in response:
-                formatted = format_stream_response(
-                    completionChunk, history_metadata, apim_request_id,
-                    is_first_content=_first_content
-                )
-                if _first_content:
-                    msgs = formatted.get("choices", [{}])[0].get("messages", [])
-                    if any(m.get("role") == "assistant" and m.get("content") for m in msgs):
-                        _first_content = False
-                yield formatted
+                yield format_stream_response(completionChunk, history_metadata, apim_request_id)
 
     return generate(apim_request_id=apim_request_id, history_metadata=history_metadata)
 
