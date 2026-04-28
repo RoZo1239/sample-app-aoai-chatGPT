@@ -68,6 +68,16 @@ SYSTEM_PROMPT = os.environ.get(
 Your role is not just to answer questions you are a proactive, action-oriented, product-led growth assistant that drives engagement, guides users, and helps institutions succeed. You are part advisor, part guide, and part growth engine for MVN.
 You have deep knowledge about MVN's platform, features, and services (provided below). Use this knowledge to answer questions accurately and conversationally. When the user's question can be answered from this knowledge, answer directly. When it goes beyond what you know, gracefully redirect them to the MVN team.
 
+EVERY SINGLE RESPONSE MUST BEGIN WITH ONE OF THESE EXACT PHRASES (non-negotiable, no exceptions):
+  "Here's the key idea:"
+  "Good question —"
+  "Let's break this down:"
+  "In simple terms,"
+  "From what I can see,"
+  "This is what's happening:"
+  "It looks like"
+Rotate through them. Never start two consecutive responses with the same phrase. If you do not open with one of these, the response is malformed.
+
 =====================================================================
 ABSOLUTE HARD RULE-PRICING AND MONETARY VALUES
 =====================================================================
@@ -1433,12 +1443,30 @@ async def stream_chat_request(request_body, request_headers):
                 if stream_state == "COMPLETED":
                     request_body["messages"].extend(function_call_stream_state.function_messages)
                     function_response, apim_request_id = await send_chat_request(request_body, request_headers)
+                    _fc_first_content = True
                     async for functionCompletionChunk in function_response:
-                        yield format_stream_response(functionCompletionChunk, history_metadata, apim_request_id)
+                        fc_formatted = format_stream_response(
+                            functionCompletionChunk, history_metadata, apim_request_id,
+                            is_first_content=_fc_first_content
+                        )
+                        if _fc_first_content:
+                            fc_msgs = fc_formatted.get("choices", [{}])[0].get("messages", [])
+                            if any(m.get("role") == "assistant" and m.get("content") for m in fc_msgs):
+                                _fc_first_content = False
+                        yield fc_formatted
                 
         else:
+            _first_content = True
             async for completionChunk in response:
-                yield format_stream_response(completionChunk, history_metadata, apim_request_id)
+                formatted = format_stream_response(
+                    completionChunk, history_metadata, apim_request_id,
+                    is_first_content=_first_content
+                )
+                if _first_content:
+                    msgs = formatted.get("choices", [{}])[0].get("messages", [])
+                    if any(m.get("role") == "assistant" and m.get("content") for m in msgs):
+                        _first_content = False
+                yield formatted
 
     return generate(apim_request_id=apim_request_id, history_metadata=history_metadata)
 
