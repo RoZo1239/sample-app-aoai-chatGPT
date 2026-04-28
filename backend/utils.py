@@ -86,7 +86,7 @@ def sanitize_response_content(content):
     if not content:
         return content
     content = _EMAIL_PLACEHOLDER_RE.sub(_OFFICIAL_EMAIL, content)
-if _MONEY_RE.search(content) or _PRICING_CONTEXT_RE.search(content):
+    if _MONEY_RE.search(content) or _PRICING_CONTEXT_RE.search(content):
         return _MONEY_REPLACEMENT
     content = _MVN_EMAIL_RE.sub(_OFFICIAL_EMAIL, content)
     content = _PHONE_RE.sub(_OFFICIAL_EMAIL, content)
