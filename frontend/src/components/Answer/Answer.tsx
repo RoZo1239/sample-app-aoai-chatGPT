@@ -257,7 +257,7 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked }: Prop
       if (/schedule\s+a\s+meeting/i.test(text)) {
         return (
           <a
-            href="https://outlook.office.com/bookwithme/user/4b7fbc393660415583a4a4eac09e3bfc%40milvetnavigator.com/booking/HOgA9kJb-0SXfHHK6rOZGw2?anonymous&ismsaljsauthenabled=true"
+            href="https://bookings.cloud.microsoft/bookwithme/user/4b7fbc393660415583a4a4eac09e3bfc%40milvetnavigator.com/booking/HOgA9kJb-0SXfHHK6rOZGw2?anonymous&ismsaljsauthenabled=true"
             target="_blank"
             rel="noopener noreferrer"
             className={styles.ctaButton}
@@ -282,10 +282,11 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked }: Prop
     },
     a({ href, children }: { href?: string; children: React.ReactNode }) {
       const isCTA = href && (
-        /milvetnavigator\.com\/contact/i.test(href) ||
-        /mailto:.*milvetnavigator/i.test(href) ||
+        /bookings\.cloud\.microsoft.*bookwithme/i.test(href) ||
+        /outlook\.office\.com.*bookwithme/i.test(href) ||
         /forms\.office\.com/i.test(href) ||
-        /outlook\.office\.com.*bookwithme/i.test(href)
+        /milvetnavigator\.com\/contact/i.test(href) ||
+        /mailto:.*milvetnavigator/i.test(href)
       )
       if (isCTA) {
         return (
