@@ -68,10 +68,10 @@ export function parseAnswer(answer: AskResponse): ParsedAnswer {
 
   filteredCitations = enumerateCitations(filteredCitations)
   answerText = sanitizeDeadEnds(answerText)
-  // Convert bare MVN email addresses to clickable booking links
+  // Convert bare MVN email addresses to clickable contact page links
   answerText = answerText.replace(
     /\binfo@milvetnavigator\.com\b/gi,
-    '[info@milvetnavigator.com](https://outlook.office.com/bookwithme/user/4b7fbc393660415583a4a4eac09e3bfc%40milvetnavigator.com/booking/HOgA9kJb-0SXfHHK6rOZGw2?anonymous&ismsaljsauthenabled=true)'
+    '[info@milvetnavigator.com](https://milvetnavigator.com/contact/)'
   )
 
   return {

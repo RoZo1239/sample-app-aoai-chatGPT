@@ -23,7 +23,7 @@ const Layout = () => {
   const highlightCTA = appStateContext?.state.highlightCTA ?? false
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const scheduleMeetingUrl =
-    'https://outlook.office.com/bookwithme/user/4b7fbc393660415583a4a4eac09e3bfc%40milvetnavigator.com/booking/HOgA9kJb-0SXfHHK6rOZGw2?anonymous&ismsaljsauthenabled=true'
+    'https://bookings.cloud.microsoft/bookwithme/user/4b7fbc393660415583a4a4eac09e3bfc%40milvetnavigator.com/booking/HOgA9kJb-0SXfHHK6rOZGw2?anonymous&ismsaljsauthenabled=true'
   const scheduleDemoUrl =
     'https://forms.office.com/Pages/ResponsePage.aspx?id=_TGI1G2FQk2gJgRPpEDtCxalQxmp6zNBsybDQDb60yBUMVNCVDhIUFJYMDJQUTUzM1YxSzdZMTA1TSQlQCN0PWcu'
 
