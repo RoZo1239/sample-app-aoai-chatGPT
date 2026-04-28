@@ -19,7 +19,7 @@ const DEAD_END_PATTERNS: RegExp[] = [
 ]
 
 const DEAD_END_REPLACEMENT =
-  "I don't have all the details on that one, but the MilVet Navigator team can help — reach out at info@milvetnavigator.com or click **'Schedule a Demo'** or **'Schedule a Meeting'** in the top-right corner."
+  "I don't have all the details on that one, but the MilVet Navigator team can help. Reach out at info@milvetnavigator.com or click **'Schedule a Demo'** or **'Schedule a Meeting'** in the top-right corner."
 
 function sanitizeDeadEnds(text: string): string {
   let result = text
@@ -68,6 +68,8 @@ export function parseAnswer(answer: AskResponse): ParsedAnswer {
 
   filteredCitations = enumerateCitations(filteredCitations)
   answerText = sanitizeDeadEnds(answerText)
+  // Strip em dashes from prose (replace with a space)
+  answerText = answerText.replace(/\s*—\s*/g, ' ')
   // Convert bare MVN email addresses to clickable contact page links
   answerText = answerText.replace(
     /\binfo@milvetnavigator\.com\b/gi,

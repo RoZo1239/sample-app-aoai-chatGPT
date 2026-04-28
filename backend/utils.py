@@ -55,7 +55,7 @@ _PRICING_CONTEXT_RE = re.compile(
 )
 
 _RETRIEVAL_DEAD_END_RE = re.compile(
-    r"""(
+    r"""(?:
         (?:the\s+)?requested\s+information\s+is\s+not\s+(?:available|found)\s+in\s+the\s+retrieved\s+data
         |
         not\s+(?:available|found)\s+in\s+the\s+retrieved\s+(?:data|results|documents)
@@ -73,14 +73,20 @@ _RETRIEVAL_DEAD_END_RE = re.compile(
         (?:unfortunately,?\s+)?there\s+(?:is|are)\s+no\s+(?:relevant\s+)?(?:results?|documents?|information|data)\s+(?:available\s+)?in\s+the\s+retrieved
         |
         i\s+(?:was\s+)?unable\s+to\s+find\s+(?:any\s+)?(?:relevant\s+)?information\s+(?:about|on|for|regarding)\s+(?:this|that)\s+(?:topic|query|question)
-    )""",
+    )[.!?]?""",
     re.IGNORECASE | re.VERBOSE,
 )
 _RETRIEVAL_DEAD_END_REPLACEMENT = (
     f"I want to make sure you get accurate details. I don't see enough verified context for that yet, "
     f"but the MilVet Navigator team can help right away at {_OFFICIAL_EMAIL}. "
-    f"You can also use the “Schedule a Demo” or “Schedule a Meeting” buttons in the top-right corner."
+    f"You can also use the Schedule a Demo or Schedule a Meeting buttons in the top-right corner."
 )
+# Pre-compiled pattern to collapse duplicate dead-end replacements
+_DEAD_END_DEDUP_RE = re.compile(
+    r'(' + re.escape(_RETRIEVAL_DEAD_END_REPLACEMENT) + r')(\s*' + re.escape(_RETRIEVAL_DEAD_END_REPLACEMENT) + r')+',
+)
+# Em dash pattern for prose sanitization
+_EM_DASH_RE = re.compile(r'\s*—\s*')
 
 def sanitize_response_content(content):
     if not content:
@@ -93,6 +99,8 @@ def sanitize_response_content(content):
     content = _CONTACT_NAME_RE.sub(r'\1MilVet Navigator team', content)
     content = _LEGACY_CONTACT_NAME_RE.sub("MilVet Navigator team", content)
     content = _RETRIEVAL_DEAD_END_RE.sub(_RETRIEVAL_DEAD_END_REPLACEMENT, content)
+    content = _DEAD_END_DEDUP_RE.sub(r'\1', content)
+    content = _EM_DASH_RE.sub(' ', content)
     return content
 
 
