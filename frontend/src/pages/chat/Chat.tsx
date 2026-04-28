@@ -794,6 +794,15 @@ const Chat = () => {
       appStateContext?.state.chatHistoryLoadingState === ChatHistoryLoadingState.Loading
     )
   }
+    const getPreviousUserMessageContent = (index: number): string => {
+    for (let i = index - 1; i >= 0; i--) {
+      const message = messages[i]
+      if (message?.role === 'user' && typeof message.content === 'string') {
+        return message.content.trim().toLowerCase()
+      }
+    }
+    return ''
+  }
 
   return (
     <div className={styles.container} role="main">
@@ -858,23 +867,26 @@ const Chat = () => {
                       </div>
                     ) : answer.role === 'assistant' ? (
                       <div className={styles.chatMessageGpt}>
-                        {typeof answer.content === "string" && <Answer
-                          answer={{
-                            answer: answer.content,
-                            citations: parseCitationFromMessage(messages[index - 1]),
-                            generated_chart: parsePlotFromMessage(messages[index - 1]),
-                            trust_score: parseTrustFromMessage(messages[index - 1]).trust_score,
-                            trust_label: parseTrustFromMessage(messages[index - 1]).trust_label,
-                            cache_hit: parseTrustFromMessage(messages[index - 1]).cache_hit,
-                            similarity: parseTrustFromMessage(messages[index - 1]).similarity,
-                            message_id: answer.id,
-                            feedback: answer.feedback,
-                            exec_results: execResults
-                          }}
-                          onCitationClicked={c => onShowCitation(c)}
-                          onExectResultClicked={() => onShowExecResult(answerId)}
-                          onExpandClicked={() => handleSuggestedQuestion('expand')}
-                        />}
+                         {typeof answer.content === "string" && (
+                          <Answer
+                            answer={{
+                              answer: answer.content,
+                              citations: parseCitationFromMessage(messages[index - 1]),
+                              generated_chart: parsePlotFromMessage(messages[index - 1]),
+                              trust_score: parseTrustFromMessage(messages[index - 1]).trust_score,
+                              trust_label: parseTrustFromMessage(messages[index - 1]).trust_label,
+                              cache_hit: parseTrustFromMessage(messages[index - 1]).cache_hit,
+                              similarity: parseTrustFromMessage(messages[index - 1]).similarity,
+                              message_id: answer.id,
+                              feedback: answer.feedback,
+                              exec_results: execResults
+                            }}
+                            onCitationClicked={c => onShowCitation(c)}
+                            onExectResultClicked={() => onShowExecResult(answerId)}
+                            onExpandClicked={() => handleSuggestedQuestion('expand')}
+                            forceSummaryMode={!/^(expand|yes|continue|go on|tell me more|more details)\b/i.test(getPreviousUserMessageContent(index))}
+                          />
+                        )}
                       </div>
                     ) : answer.role === ERROR ? (
                       <div className={styles.chatMessageError}>
