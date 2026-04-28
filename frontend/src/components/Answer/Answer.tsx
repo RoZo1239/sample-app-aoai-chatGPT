@@ -20,9 +20,10 @@ interface Props {
   answer: AskResponse
   onCitationClicked: (citedDocument: Citation) => void
   onExectResultClicked: (answerId: string) => void
+  onExpandClicked?: () => void
 }
 
-export const Answer = ({ answer, onCitationClicked, onExectResultClicked }: Props) => {
+export const Answer = ({ answer, onCitationClicked, onExectResultClicked, onExpandClicked }: Props) => {
   const initializeAnswerFeedback = (answer: AskResponse) => {
     if (answer.message_id == undefined) return undefined
     if (answer.feedback == undefined) return undefined
@@ -242,6 +243,17 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked }: Prop
     },
     strong({ children }: { children: React.ReactNode }) {
       const text = String(children).replace(/[''""]/g, '')
+      if (/expand\s+for\s+more\s+details/i.test(text)) {
+        return (
+          <button
+            className={styles.expandButton}
+            onClick={() => onExpandClicked?.()}
+            type="button"
+          >
+            {children}
+          </button>
+        )
+      }
       if (/schedule\s+a\s+demo/i.test(text)) {
         return (
           <a
