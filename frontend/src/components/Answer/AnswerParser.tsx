@@ -31,23 +31,6 @@ function sanitizeDeadEnds(text: string): string {
   return result
 }
 
-// Filler enforcement — guaranteed opening regardless of model output
-const FILLER_OPENING_RE = /^(?:here'?s\s+the\s+key|good\s+question|let'?s\s+break|in\s+simple\s+terms|from\s+what\s+i\s+can\s+see|this\s+is\s+what'?s\s+happening|it\s+looks\s+like)/i
-const FILLER_POOL = [
-  "Here's the key idea: ",
-  "From what I can see, ",
-  "Let's break this down: ",
-  "In simple terms, ",
-]
-let _fillerIdx = 0
-function enforceOpeningFiller(text: string): string {
-  // Skip for loading placeholder and fragments too short to evaluate
-  if (text.length < 60) return text
-  if (FILLER_OPENING_RE.test(text.trimStart())) return text
-  const filler = FILLER_POOL[_fillerIdx % FILLER_POOL.length]
-  _fillerIdx++
-  return filler + text
-}
 
 export const enumerateCitations = (citations: Citation[]) => {
   const filepathMap = new Map()
@@ -92,9 +75,6 @@ export function parseAnswer(answer: AskResponse): ParsedAnswer {
     /\binfo@milvetnavigator\.com\b/gi,
     '[info@milvetnavigator.com](https://milvetnavigator.com/contact/)'
   )
-
-  // Enforce conversational opening filler
-  answerText = enforceOpeningFiller(answerText)
 
   // Split on [EXPAND_START] marker if the model included it
   const EXPAND_MARKER = '[EXPAND_START]'

@@ -899,11 +899,6 @@ const Chat = () => {
                     ) : null}
                   </>
                 ))}
-                {showLoadingMessage && (
-                  <div className={styles.chatMessageGpt}>
-                    <div className={styles.loadingMessage}>Generating answer...</div>
-                  </div>
-                )}
                 <div ref={chatMessageStreamEnd} />
               </div>
             )}
