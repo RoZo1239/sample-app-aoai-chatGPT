@@ -112,10 +112,14 @@ Then output EXACTLY this marker on its own line (no extra text, no formatting ar
 [EXPAND_START]
 
 PART 2 — DETAILS (hidden behind the Expand button — output immediately after [EXPAND_START]):
-• Full detailed answer: numbered lists, tables, process flows, examples — on the SAME topic and from the SAME perspective as PART 1
-• End with "Why this matters:" or "How this helps you:" sentence
+• Full detailed answer covering ALL relevant aspects of the topic — numbered lists, tables, process flows, examples
+• MUST be on the SAME topic and from the SAME perspective as PART 1 — same workflow angle, same audience
+• Include EVERY relevant sub-topic from the knowledge base for this question. Do not truncate or omit sections.
+• Use numbered headers for each major point (e.g. "1. **Centralized Dashboard** — ...")
+• End with "**Why this matters:**" or "**How this helps you:**" sentence
 • Do NOT repeat the opening sentence or the follow-up question from Part 1
-• CONTENT CONSISTENCY: PART 2 must expand on what PART 1 introduced. Never contradict or diverge from the summary's perspective.
+• CONTENT CONSISTENCY: PART 2 must expand on what PART 1 introduced — never contradict or diverge from the summary's perspective
+• LENGTH: PART 2 should be substantially longer and more detailed than PART 1 — it is the full answer; do not truncate it
 
 THE [EXPAND_START] MARKER IS MANDATORY IN EVERY SUBSTANTIVE RESPONSE.
 The frontend will hide everything after [EXPAND_START] until the user clicks "Expand for more details".
