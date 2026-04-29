@@ -17,19 +17,39 @@ import { parseAnswer } from './AnswerParser'
 import styles from './Answer.module.css'
 
 // Detect if model already opened with a conversational filler
-const _FILLER_DETECT_RE = /^(?:here.?s\s+the\s+key|good\s+question|let.?s\s+break|in\s+simple\s+terms|from\s+what\s+i\s+can\s+see|this\s+is\s+what.?s\s+happening|it\s+looks\s+like)/i
-const STREAMING_FILLER = "Here's the key idea: "
+const _FILLER_DETECT_RE = /^(?:here.?s\s+the\s+key|good\s+question|let.?s\s+break|in\s+simple\s+terms|from\s+what\s+i\s+can\s+see|this\s+is\s+what.?s\s+happening|it\s+looks\s+like|let\s+me\s+|building\s+on\s+|diving\s+|looking\s+into)/i
+
+const _QUESTION_FILLERS: Array<{ pattern: RegExp; filler: string }> = [
+  { pattern: /\bhow\s+quick|\bfaster|\bspeed|\btime\s+sav|\bhow\s+long/i,      filler: "Let me pull up the details on that..." },
+  { pattern: /\bwhy\b/i,                                                         filler: "Let me break down the reasoning..." },
+  { pattern: /\bcompare|\bvs\b|\bdifference|\bbetter|\bover\b/i,                 filler: "Here's the comparison:" },
+  { pattern: /\bexpand|tell\s+me\s+more|more\s+detail|elaborate/i,              filler: "Diving deeper into that..." },
+  { pattern: /\bpric|\bcost|\bhow\s+much|\bafford/i,                             filler: "Let me address that..." },
+  { pattern: /\bcan\s+i|\bcan\s+we|\bis\s+it\s+possible|\bdo\s+you\s+support/i, filler: "Looking into that for you..." },
+  { pattern: /\bhow\s+does|\bhow\s+do|\bhow\s+is/i,                             filler: "Here's how that works:" },
+  { pattern: /\bwhat\s+is|\bwhat\s+are|\bwhat\s+does|\bwhat\s+kind/i,           filler: "Here's what I found:" },
+  { pattern: /\bintegrat|\bconnect|\bsync|\bplatform|\bsis\b/i,                  filler: "Here's how the integration works:" },
+  { pattern: /\baudit|\bcomplian|\bva\s+process|\bregulat/i,                     filler: "Here's the key detail on that:" },
+]
+
+function selectStreamingFiller(question: string): string {
+  for (const { pattern, filler } of _QUESTION_FILLERS) {
+    if (pattern.test(question)) return filler
+  }
+  return "Here's the key idea: "
+}
 
 interface Props {
   answer: AskResponse
   isStreaming?: boolean
+  questionText?: string
   onCitationClicked: (citedDocument: Citation) => void
   onExectResultClicked: (answerId: string) => void
   onExpandClicked?: () => void
   forceSummaryMode?: boolean
 }
 
-export const Answer = ({ answer, isStreaming = false, onCitationClicked, onExectResultClicked, onExpandClicked, forceSummaryMode = false }: Props) => {
+export const Answer = ({ answer, isStreaming = false, questionText = '', onCitationClicked, onExectResultClicked, onExpandClicked, forceSummaryMode = false }: Props) => {
   const initializeAnswerFeedback = (answer: AskResponse) => {
     if (answer.message_id == undefined) return undefined
     if (answer.feedback == undefined) return undefined
@@ -416,7 +436,7 @@ export const Answer = ({ answer, isStreaming = false, onCitationClicked, onExect
                 // Completed answers never get a prefix, preventing old answers from changing.
                 const normalized = baseText.trimStart().replace(/[\u2018\u2019\u02bc]/g, "'")
                 const modelHasFiller = _FILLER_DETECT_RE.test(normalized)
-                const prefix = isStreaming && !modelHasFiller ? STREAMING_FILLER : ''
+                const prefix = isStreaming && !modelHasFiller ? selectStreamingFiller(questionText) : ''
                 const displayText = prefix + baseText
                 const sanitized = SANITIZE_ANSWER
                   ? DOMPurify.sanitize(displayText, { ALLOWED_TAGS: XSSAllowTags, ALLOWED_ATTR: XSSAllowAttributes })
