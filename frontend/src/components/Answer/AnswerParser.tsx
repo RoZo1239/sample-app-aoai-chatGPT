@@ -23,6 +23,11 @@ const DEAD_END_PATTERNS: RegExp[] = [
 const DEAD_END_REPLACEMENT =
   "I don't have all the details on that one, but the MilVet Navigator team can help. Reach out at info@milvetnavigator.com or click **'Schedule a Demo'** or **'Schedule a Meeting'** in the top-right corner."
 
+// Strips template filler phrases the model prepends — the frontend loading indicator
+// already shows a contextual filler while streaming, so we remove these from the
+// final assembled text to keep the answer clean.
+const OPENING_FILLER_RE = /^(?:here[’']?s\s+the\s+key\s+(?:idea|detail)[:\s]+|good\s+question[\s—-]+|let[’']?s\s+break\s+this\s+down[:\s]+|in\s+simple\s+terms[:\s]+|from\s+what\s+i\s+can\s+see[,\s]+|this\s+is\s+what[’']?s\s+happening[:\s]+|it\s+looks\s+like\s+|here[’']?s\s+what\s+i\s+found[:\s]+|here[’']?s\s+how\s+that\s+works[:\s]+|let\s+me\s+(?:break|pull|dig|address|walk)[^:]*:\s*)/i
+
 function sanitizeDeadEnds(text: string): string {
   let result = text
   for (const pattern of DEAD_END_PATTERNS) {
@@ -71,6 +76,7 @@ export function parseAnswer(answer: AskResponse): ParsedAnswer {
   filteredCitations = enumerateCitations(filteredCitations)
   answerText = sanitizeDeadEnds(answerText)
   answerText = answerText.replace(/\s*—\s*/g, ' ')
+  answerText = answerText.replace(OPENING_FILLER_RE, '')
   answerText = answerText.replace(
     /\binfo@milvetnavigator\.com\b/gi,
     '[info@milvetnavigator.com](https://milvetnavigator.com/contact/)'
