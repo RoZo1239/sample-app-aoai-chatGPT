@@ -1,4 +1,4 @@
-import { FormEvent, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { FormEvent, useContext, useEffect, useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { nord } from 'react-syntax-highlighter/dist/esm/styles/prism'
@@ -16,20 +16,40 @@ import { parseAnswer } from './AnswerParser'
 
 import styles from './Answer.module.css'
 
-// Filler enforcement — applied once per Answer instance via useRef
-const _FILLER_DETECT_RE = /^(?:here.?s\s+the\s+key|good\s+question|let.?s\s+break|in\s+simple\s+terms|from\s+what\s+i\s+can\s+see|this\s+is\s+what.?s\s+happening|it\s+looks\s+like)/i
-const _FILLER_POOL = ["Here's the key idea: ", "From what I can see, ", "Let's break this down: ", "In simple terms, "]
-let _globalFillerIdx = 0
+// Detect if model already opened with a conversational filler
+const _FILLER_DETECT_RE = /^(?:here.?s\s+the\s+key|good\s+question|let.?s\s+break|in\s+simple\s+terms|from\s+what\s+i\s+can\s+see|this\s+is\s+what.?s\s+happening|it\s+looks\s+like|let\s+me\s+|building\s+on\s+|diving\s+|looking\s+into)/i
+
+const _QUESTION_FILLERS: Array<{ pattern: RegExp; filler: string }> = [
+  { pattern: /\bhow\s+quick|\bfaster|\bspeed|\btime\s+sav|\bhow\s+long/i,      filler: "Let me pull up the details on that..." },
+  { pattern: /\bwhy\b/i,                                                         filler: "Let me break down the reasoning..." },
+  { pattern: /\bcompare|\bvs\b|\bdifference|\bbetter|\bover\b/i,                 filler: "Here's the comparison:" },
+  { pattern: /\bexpand|tell\s+me\s+more|more\s+detail|elaborate/i,              filler: "Diving deeper into that..." },
+  { pattern: /\bpric|\bcost|\bhow\s+much|\bafford/i,                             filler: "Let me address that..." },
+  { pattern: /\bcan\s+i|\bcan\s+we|\bis\s+it\s+possible|\bdo\s+you\s+support/i, filler: "Looking into that for you..." },
+  { pattern: /\bhow\s+does|\bhow\s+do|\bhow\s+is/i,                             filler: "Here's how that works:" },
+  { pattern: /\bwhat\s+is|\bwhat\s+are|\bwhat\s+does|\bwhat\s+kind/i,           filler: "Here's what I found:" },
+  { pattern: /\bintegrat|\bconnect|\bsync|\bplatform|\bsis\b/i,                  filler: "Here's how the integration works:" },
+  { pattern: /\baudit|\bcomplian|\bva\s+process|\bregulat/i,                     filler: "Here's the key detail on that:" },
+]
+
+function selectStreamingFiller(question: string): string {
+  for (const { pattern, filler } of _QUESTION_FILLERS) {
+    if (pattern.test(question)) return filler
+  }
+  return "Here's the key idea: "
+}
 
 interface Props {
   answer: AskResponse
+  isStreaming?: boolean
+  questionText?: string
   onCitationClicked: (citedDocument: Citation) => void
   onExectResultClicked: (answerId: string) => void
   onExpandClicked?: () => void
   forceSummaryMode?: boolean
 }
 
-export const Answer = ({ answer, onCitationClicked, onExectResultClicked, onExpandClicked, forceSummaryMode = false }: Props) => {
+export const Answer = ({ answer, isStreaming = false, questionText = '', onCitationClicked, onExectResultClicked, onExpandClicked, forceSummaryMode = false }: Props) => {
   const initializeAnswerFeedback = (answer: AskResponse) => {
     if (answer.message_id == undefined) return undefined
     if (answer.feedback == undefined) return undefined
@@ -40,7 +60,6 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked, onExpa
 
   const [isRefAccordionOpen, { toggle: toggleIsRefAccordionOpen }] = useBoolean(false)
   const [isExpanded, setIsExpanded] = useState(false)
-  const fillerRef = useRef<string>('')
   const filePathTruncationLimit = 50
 
   const parsedAnswer = useMemo(() => parseAnswer(answer), [answer])
@@ -383,22 +402,41 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked, onExpa
           <Stack horizontal grow>
             <Stack.Item grow>
               {parsedAnswer && (() => {
+                // When expanded with both parts, render summary + divider + details
+                if (isExpanded && parsedAnswer.summaryText && parsedAnswer.detailsText) {
+                  const sanitizeMd = (text: string) => SANITIZE_ANSWER
+                    ? DOMPurify.sanitize(text, { ALLOWED_TAGS: XSSAllowTags, ALLOWED_ATTR: XSSAllowAttributes })
+                    : text
+                  return (
+                    <>
+                      <ReactMarkdown
+                        linkTarget="_blank"
+                        remarkPlugins={[remarkGfm, supersub]}
+                        children={sanitizeMd(parsedAnswer.summaryText)}
+                        className={styles.answerText}
+                        components={components}
+                      />
+                      <hr className={styles.expandDivider} />
+                      <ReactMarkdown
+                        linkTarget="_blank"
+                        remarkPlugins={[remarkGfm, supersub]}
+                        children={sanitizeMd(parsedAnswer.detailsText)}
+                        className={styles.answerText}
+                        components={components}
+                      />
+                    </>
+                  )
+                }
+
                 const baseText = !isExpanded && parsedAnswer.summaryText
                   ? parsedAnswer.summaryText
                   : parsedAnswer.markdownFormatText
 
-                // Assign filler exactly once when there is enough text
-                if (!fillerRef.current && baseText.length >= 60) {
-                  const normalized = baseText.trimStart().replace(/[‘’ʼ]/g, "'")
-                  if (_FILLER_DETECT_RE.test(normalized)) {
-                    fillerRef.current = '​' // model already has filler — mark as checked
-                  } else {
-                    fillerRef.current = _FILLER_POOL[_globalFillerIdx % _FILLER_POOL.length]
-                    _globalFillerIdx++
-                  }
-                }
-
-                const prefix = fillerRef.current && fillerRef.current !== '​' ? fillerRef.current : ''
+                // Show filler only while streaming and model has not opened with its own filler.
+                // Completed answers never get a prefix, preventing old answers from changing.
+                const normalized = baseText.trimStart().replace(/[\u2018\u2019\u02bc]/g, "'")
+                const modelHasFiller = _FILLER_DETECT_RE.test(normalized)
+                const prefix = isStreaming && !modelHasFiller ? selectStreamingFiller(questionText) : ''
                 const displayText = prefix + baseText
                 const sanitized = SANITIZE_ANSWER
                   ? DOMPurify.sanitize(displayText, { ALLOWED_TAGS: XSSAllowTags, ALLOWED_ATTR: XSSAllowAttributes })
