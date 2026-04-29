@@ -87,8 +87,23 @@ export function parseAnswer(answer: AskResponse): ParsedAnswer {
     detailsText = answerText.slice(boundaryIdx + EXPAND_MARKER.length).trim()
     answerText = summaryText + '\n\n' + detailsText
   } else if (answerText.length > 200) {
-    // Auto-split fallback: find the first paragraph break after 150 chars
-    const splitIdx = answerText.indexOf('\n\n', 150)
+    // Auto-split fallback: try to keep "Why this matters" + follow-up question in the summary.
+    const whyIdx = answerText.search(/\bwhy\s+this\s+matters\b|\bhow\s+this\s+helps\b/i)
+    let splitIdx = -1
+    if (whyIdx !== -1) {
+      // Find the paragraph break after "Why this matters" line — that ends the follow-up question
+      const afterWhy = answerText.indexOf('\n\n', whyIdx)
+      if (afterWhy !== -1) {
+        const afterFollowup = answerText.indexOf('\n\n', afterWhy + 2)
+        splitIdx = afterFollowup !== -1 && afterFollowup < answerText.length - 80
+          ? afterFollowup
+          : afterWhy
+      }
+    }
+    // Fall back to first paragraph break after 150 chars if no "Why this matters" found
+    if (splitIdx === -1) {
+      splitIdx = answerText.indexOf('\n\n', 150)
+    }
     if (splitIdx !== -1 && splitIdx < answerText.length - 80) {
       summaryText = answerText.slice(0, splitIdx).trim()
       detailsText = answerText.slice(splitIdx).trim()

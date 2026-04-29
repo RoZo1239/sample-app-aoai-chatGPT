@@ -1,4 +1,4 @@
-import { FormEvent, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { FormEvent, useContext, useEffect, useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { nord } from 'react-syntax-highlighter/dist/esm/styles/prism'
@@ -16,20 +16,20 @@ import { parseAnswer } from './AnswerParser'
 
 import styles from './Answer.module.css'
 
-// Filler enforcement — applied once per Answer instance via useRef
+// Detect if model already opened with a conversational filler
 const _FILLER_DETECT_RE = /^(?:here.?s\s+the\s+key|good\s+question|let.?s\s+break|in\s+simple\s+terms|from\s+what\s+i\s+can\s+see|this\s+is\s+what.?s\s+happening|it\s+looks\s+like)/i
-const _FILLER_POOL = ["Here's the key idea: ", "From what I can see, ", "Let's break this down: ", "In simple terms, "]
-let _globalFillerIdx = 0
+const STREAMING_FILLER = "Here's the key idea: "
 
 interface Props {
   answer: AskResponse
+  isStreaming?: boolean
   onCitationClicked: (citedDocument: Citation) => void
   onExectResultClicked: (answerId: string) => void
   onExpandClicked?: () => void
   forceSummaryMode?: boolean
 }
 
-export const Answer = ({ answer, onCitationClicked, onExectResultClicked, onExpandClicked, forceSummaryMode = false }: Props) => {
+export const Answer = ({ answer, isStreaming = false, onCitationClicked, onExectResultClicked, onExpandClicked, forceSummaryMode = false }: Props) => {
   const initializeAnswerFeedback = (answer: AskResponse) => {
     if (answer.message_id == undefined) return undefined
     if (answer.feedback == undefined) return undefined
@@ -40,7 +40,6 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked, onExpa
 
   const [isRefAccordionOpen, { toggle: toggleIsRefAccordionOpen }] = useBoolean(false)
   const [isExpanded, setIsExpanded] = useState(false)
-  const fillerRef = useRef<string>('')
   const filePathTruncationLimit = 50
 
   const parsedAnswer = useMemo(() => parseAnswer(answer), [answer])
@@ -387,18 +386,11 @@ export const Answer = ({ answer, onCitationClicked, onExectResultClicked, onExpa
                   ? parsedAnswer.summaryText
                   : parsedAnswer.markdownFormatText
 
-                // Assign filler exactly once when there is enough text
-                if (!fillerRef.current && baseText.length >= 60) {
-                  const normalized = baseText.trimStart().replace(/[‘’ʼ]/g, "'")
-                  if (_FILLER_DETECT_RE.test(normalized)) {
-                    fillerRef.current = '​' // model already has filler — mark as checked
-                  } else {
-                    fillerRef.current = _FILLER_POOL[_globalFillerIdx % _FILLER_POOL.length]
-                    _globalFillerIdx++
-                  }
-                }
-
-                const prefix = fillerRef.current && fillerRef.current !== '​' ? fillerRef.current : ''
+                // Show filler only while streaming and model hasn’t opened with its own filler.
+                // Completed answers never get a prefix — this prevents old answers from changing.
+                const normalized = baseText.trimStart().replace(/[\u2018\u2019\u02bc]/g, "'")
+                const modelHasFiller = _FILLER_DETECT_RE.test(normalized)
+                const prefix = isStreaming && !modelHasFiller ? STREAMING_FILLER : ''
                 const displayText = prefix + baseText
                 const sanitized = SANITIZE_ANSWER
                   ? DOMPurify.sanitize(displayText, { ALLOWED_TAGS: XSSAllowTags, ALLOWED_ATTR: XSSAllowAttributes })

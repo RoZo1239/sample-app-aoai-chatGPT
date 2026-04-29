@@ -881,6 +881,7 @@ const Chat = () => {
                               feedback: answer.feedback,
                               exec_results: execResults
                             }}
+                            isStreaming={isLoading && index === messages.length - 1}
                             onCitationClicked={c => onShowCitation(c)}
                             onExectResultClicked={() => onShowExecResult(answerId)}
                             onExpandClicked={() => handleSuggestedQuestion('expand')}

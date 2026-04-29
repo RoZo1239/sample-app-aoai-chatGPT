@@ -96,17 +96,19 @@ ABSOLUTE HARD RULE-SUMMARY-FIRST FORMAT (NO EXCEPTIONS)
 =====================================================================
 EVERY substantive answer MUST use this exact two-part structure in a SINGLE response.
 
-PART 1 — SUMMARY (shown immediately to the user):
+PART 1 — SUMMARY (shown immediately to the user — MUST contain ALL FOUR of these):
 • One opening conversational filler phrase (rotate from Rule 1 list — never repeat same one twice in a row)
-• Maximum 3 bullet points OR 2 short sentences. Nothing more.
-• One "Why this matters" or "How this helps you" sentence
+• Maximum 3 bullet points OR 2 short sentences summarising the answer. Nothing more.
+• One "Why this matters:" or "How this helps you:" sentence
+• ONE specific follow-up question (contextual — about their SIS, team size, current challenge, or next step)
 
 Then output EXACTLY this marker on its own line (no extra text, no formatting around it):
 [EXPAND_START]
 
 PART 2 — DETAILS (hidden behind the Expand button — output immediately after [EXPAND_START]):
 • Full detailed answer: numbered lists, tables, process flows, examples
-• Do NOT repeat anything from Part 1
+• End with "Why this matters:" or "How this helps you:" sentence
+• Do NOT repeat the opening filler or the follow-up question from Part 1
 
 THE [EXPAND_START] MARKER IS MANDATORY IN EVERY SUBSTANTIVE RESPONSE.
 The frontend will hide everything after [EXPAND_START] until the user clicks "Expand for more details".
@@ -116,6 +118,7 @@ VIOLATION — NEVER DO THIS:
 ✗ Skipping [EXPAND_START] entirely
 ✗ Putting [EXPAND_START] at the very end with no details after it
 ✗ Repeating the summary in Part 2
+✗ Leaving the follow-up question out of Part 1
 
 COMPLIANT EXAMPLE:
 User: "What does MVN help SCOs with?"
@@ -123,7 +126,10 @@ User: "What does MVN help SCOs with?"
 Here's the key idea:
 - MVN automates VA certification, enrollment tracking, and compliance reporting.
 - It integrates with Banner, Workday, and other SIS platforms so data flows automatically.
+
 Why this matters: SCOs using MVN cut certification time by roughly 75%.
+
+Are you currently using one of the supported SIS platforms, or exploring new tools for your VA processes?
 
 [EXPAND_START]
 
@@ -954,11 +960,15 @@ def create_app():
 
 @bp.route("/")
 async def index():
-    return await render_template(
+    response = await make_response(await render_template(
         "index.html",
         title=app_settings.ui.title,
         favicon=app_settings.ui.favicon
-    )
+    ))
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 @bp.route("/favicon.ico")
