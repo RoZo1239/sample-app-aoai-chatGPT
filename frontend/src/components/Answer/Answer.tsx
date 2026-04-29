@@ -422,16 +422,15 @@ export const Answer = ({ answer, isStreaming = false, questionText = '', onCitat
                     )
                   }
 
-                  // [EXPAND_START] not yet arrived \u2014 show growing full text with filler prefix
+                  // [EXPAND_START] not yet arrived \u2014 show growing full text, no prefix added.
+                  // OPENING_FILLER_RE already strips the model's own opener from markdownFormatText,
+                  // so adding a frontend prefix here causes doubled/mismatched filler text.
                   const raw = parsedAnswer.markdownFormatText
-                  const normalized = raw.trimStart().replace(/[\u2018\u2019\u02bc]/g, "'")
-                  const modelHasFiller = _FILLER_DETECT_RE.test(normalized)
-                  const prefix = modelHasFiller ? '' : selectStreamingFiller(questionText)
                   return (
                     <ReactMarkdown
                       linkTarget="_blank"
                       remarkPlugins={[remarkGfm, supersub]}
-                      children={sanitizeMd(prefix + raw)}
+                      children={sanitizeMd(raw)}
                       className={styles.answerText}
                       components={components}
                     />
