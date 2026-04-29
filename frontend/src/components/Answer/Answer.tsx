@@ -406,9 +406,23 @@ export const Answer = ({ answer, isStreaming = false, questionText = '', onCitat
                   ? DOMPurify.sanitize(text, { ALLOWED_TAGS: XSSAllowTags, ALLOWED_ATTR: XSSAllowAttributes })
                   : text
 
-                // While streaming: show full text growing so nothing appears to disappear.
-                // After streaming ends: switch to summary + expand button (or full if expanded).
+                // While streaming: show growing text up until [EXPAND_START] arrives,
+                // then lock to summaryText so the final state transition is seamless.
                 if (isStreaming) {
+                  // [EXPAND_START] already arrived \u2014 show summary only (no flash on completion)
+                  if (parsedAnswer.summaryText) {
+                    return (
+                      <ReactMarkdown
+                        linkTarget="_blank"
+                        remarkPlugins={[remarkGfm, supersub]}
+                        children={sanitizeMd(parsedAnswer.summaryText)}
+                        className={styles.answerText}
+                        components={components}
+                      />
+                    )
+                  }
+
+                  // [EXPAND_START] not yet arrived \u2014 show growing full text with filler prefix
                   const raw = parsedAnswer.markdownFormatText
                   const normalized = raw.trimStart().replace(/[\u2018\u2019\u02bc]/g, "'")
                   const modelHasFiller = _FILLER_DETECT_RE.test(normalized)
