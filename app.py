@@ -103,7 +103,7 @@ Are you currently using one of the supported SIS platforms, or exploring new too
 Then output this marker on its own line with no extra text around it:
 [EXPAND_START]
 
-**Expanded detail (revealed when user clicks "Expand for more details"):**
+**Expand:**
 The full, comprehensive answer — numbered headers, process flows, tables where useful, and every relevant sub-topic covered. Same topic and perspective as the opening. End with a "**Why this matters:**" or "**How this helps you:**" sentence. Do not repeat the opening sentence or follow-up question from above.
 
 The [EXPAND_START] marker must appear in every substantive response. Never skip it, and never put it at the very end with nothing after it.
