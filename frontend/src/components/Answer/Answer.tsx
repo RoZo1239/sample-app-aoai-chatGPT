@@ -402,11 +402,30 @@ export const Answer = ({ answer, isStreaming = false, questionText = '', onCitat
           <Stack horizontal grow>
             <Stack.Item grow>
               {parsedAnswer && (() => {
-                // When expanded with both parts, render summary + divider + details
+                const sanitizeMd = (text: string) => SANITIZE_ANSWER
+                  ? DOMPurify.sanitize(text, { ALLOWED_TAGS: XSSAllowTags, ALLOWED_ATTR: XSSAllowAttributes })
+                  : text
+
+                // While streaming: show full text growing so nothing appears to disappear.
+                // After streaming ends: switch to summary + expand button (or full if expanded).
+                if (isStreaming) {
+                  const raw = parsedAnswer.markdownFormatText
+                  const normalized = raw.trimStart().replace(/[\u2018\u2019\u02bc]/g, "'")
+                  const modelHasFiller = _FILLER_DETECT_RE.test(normalized)
+                  const prefix = modelHasFiller ? '' : selectStreamingFiller(questionText)
+                  return (
+                    <ReactMarkdown
+                      linkTarget="_blank"
+                      remarkPlugins={[remarkGfm, supersub]}
+                      children={sanitizeMd(prefix + raw)}
+                      className={styles.answerText}
+                      components={components}
+                    />
+                  )
+                }
+
+                // Expanded state: summary above divider, full details below
                 if (isExpanded && parsedAnswer.summaryText && parsedAnswer.detailsText) {
-                  const sanitizeMd = (text: string) => SANITIZE_ANSWER
-                    ? DOMPurify.sanitize(text, { ALLOWED_TAGS: XSSAllowTags, ALLOWED_ATTR: XSSAllowAttributes })
-                    : text
                   return (
                     <>
                       <ReactMarkdown
@@ -428,29 +447,18 @@ export const Answer = ({ answer, isStreaming = false, questionText = '', onCitat
                   )
                 }
 
-                const baseText = !isExpanded && parsedAnswer.summaryText
-                  ? parsedAnswer.summaryText
-                  : parsedAnswer.markdownFormatText
-
-                // Show filler only while streaming and model has not opened with its own filler.
-                // Completed answers never get a prefix, preventing old answers from changing.
-                const normalized = baseText.trimStart().replace(/[\u2018\u2019\u02bc]/g, "'")
-                const modelHasFiller = _FILLER_DETECT_RE.test(normalized)
-                const prefix = isStreaming && !modelHasFiller ? selectStreamingFiller(questionText) : ''
-                const displayText = prefix + baseText
-                const sanitized = SANITIZE_ANSWER
-                  ? DOMPurify.sanitize(displayText, { ALLOWED_TAGS: XSSAllowTags, ALLOWED_ATTR: XSSAllowAttributes })
-                  : displayText
+                // Default: summary (collapsed) or full text if no split
+                const baseText = parsedAnswer.summaryText ?? parsedAnswer.markdownFormatText
                 return (
                   <>
                     <ReactMarkdown
                       linkTarget="_blank"
                       remarkPlugins={[remarkGfm, supersub]}
-                      children={sanitized}
+                      children={sanitizeMd(baseText)}
                       className={styles.answerText}
                       components={components}
                     />
-                    {parsedAnswer.detailsText && !isExpanded && (
+                    {parsedAnswer.detailsText && (
                       <button
                         className={styles.expandButton}
                         onClick={() => setIsExpanded(true)}
