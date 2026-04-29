@@ -226,6 +226,14 @@ sup {
   color: #ffffff;
 }
 
+.expandDivider {
+  width: 100%;
+  border: none;
+  border-top: 2px dashed #b0c8e8;
+  margin: 14px 0 10px 0;
+  opacity: 0.8;
+}
+
 @media (max-width: 480px) {
   .answerFooter {
     flex-direction: column-reverse;

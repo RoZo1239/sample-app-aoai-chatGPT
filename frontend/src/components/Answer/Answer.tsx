@@ -382,12 +382,38 @@ export const Answer = ({ answer, isStreaming = false, onCitationClicked, onExect
           <Stack horizontal grow>
             <Stack.Item grow>
               {parsedAnswer && (() => {
+                // When expanded with both parts, render summary + divider + details
+                if (isExpanded && parsedAnswer.summaryText && parsedAnswer.detailsText) {
+                  const sanitizeMd = (text: string) => SANITIZE_ANSWER
+                    ? DOMPurify.sanitize(text, { ALLOWED_TAGS: XSSAllowTags, ALLOWED_ATTR: XSSAllowAttributes })
+                    : text
+                  return (
+                    <>
+                      <ReactMarkdown
+                        linkTarget="_blank"
+                        remarkPlugins={[remarkGfm, supersub]}
+                        children={sanitizeMd(parsedAnswer.summaryText)}
+                        className={styles.answerText}
+                        components={components}
+                      />
+                      <hr className={styles.expandDivider} />
+                      <ReactMarkdown
+                        linkTarget="_blank"
+                        remarkPlugins={[remarkGfm, supersub]}
+                        children={sanitizeMd(parsedAnswer.detailsText)}
+                        className={styles.answerText}
+                        components={components}
+                      />
+                    </>
+                  )
+                }
+
                 const baseText = !isExpanded && parsedAnswer.summaryText
                   ? parsedAnswer.summaryText
                   : parsedAnswer.markdownFormatText
 
-                // Show filler only while streaming and model hasn’t opened with its own filler.
-                // Completed answers never get a prefix — this prevents old answers from changing.
+                // Show filler only while streaming and model has not opened with its own filler.
+                // Completed answers never get a prefix, preventing old answers from changing.
                 const normalized = baseText.trimStart().replace(/[\u2018\u2019\u02bc]/g, "'")
                 const modelHasFiller = _FILLER_DETECT_RE.test(normalized)
                 const prefix = isStreaming && !modelHasFiller ? STREAMING_FILLER : ''
