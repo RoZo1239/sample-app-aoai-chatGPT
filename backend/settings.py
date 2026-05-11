@@ -3,6 +3,7 @@ import json
 import logging
 from abc import ABC, abstractmethod
 from pydantic import (
+    AliasChoices,
     BaseModel,
     confloat,
     conint,
@@ -758,7 +759,10 @@ class _BaseSettings(BaseSettings):
         env_ignore_empty=True
     )
     datasource_type: Optional[str] = None
-    auth_enabled: bool = True
+    auth_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices('auth_enabled', 'AZURE_USE_AUTHENTICATION')
+    )
     sanitize_answer: bool = False
     use_promptflow: bool = False
 
