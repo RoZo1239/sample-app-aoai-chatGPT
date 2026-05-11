@@ -952,7 +952,8 @@ USER_AGENT = "GitHubSampleWebApp/AsyncAzureOpenAI/1.0.0"
 
 # Frontend Settings via Environment Variables
 frontend_settings = {
-    "auth_enabled": app_settings.base_settings.auth_enabled,
+    "auth_enabled": app_settings.base_settings.auth_enabled and
+        os.environ.get("AZURE_USE_AUTHENTICATION", "true").lower() not in ("false", "0", "no"),
     "feedback_enabled": (
         app_settings.chat_history and
         app_settings.chat_history.enable_feedback
